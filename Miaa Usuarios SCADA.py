@@ -1,9 +1,9 @@
 import pandas as pd
-import sqlalchemy
+import pymysql
 import streamlit as st
 
 
-# Función de conexión utilizando la URL directa de los secretos
+# Función para extraer los parámetros de la URL en los secretos y conectar con pymysql
 def get_connection():
   secrets = st.secrets
 
@@ -14,9 +14,23 @@ def get_connection():
     )
     st.stop()
 
-  db_url = secrets["databases"]["url_dic"]
-  engine = sqlalchemy.create_engine(db_url)
-  return engine
+  url = secrets["databases"]["url_dic"]
+
+  # Parseamos la URL de pymysql: mysql+pymysql://usuario:password@host/database
+  # Ejemplo: mysql+pymysql://miaamx_telemetria2:bWkrw1Uum1O&@miaa.mx/miaamx_telemetria2
+  clean_url = url.replace("mysql+pymysql://", "")
+  auth, rest = clean_url.split("@")
+  user, password = auth.split(":")
+  host, database = rest.split("/")
+
+  return pymysql.connect(
+      host=host,
+      user=user,
+      password=password,
+      database=database,
+      port=3306,
+      cursorclass=pymysql.cursors.DictCursor,
+  )
 
 
 st.title("👥 Gestión de Usuarios del Sistema")
@@ -34,13 +48,16 @@ tab_lista, tab_crear = st.tabs(["📋 Lista de Usuarios", "➕ Nuevo Usuario"])
 with tab_lista:
   st.subheader("Usuarios Registrados")
   try:
-    engine = get_connection()
-    df_usuarios = pd.read_sql(
-        "SELECT id, usuario, tipo_usuario, departamento FROM usuarios", engine
-    )
+    connection = get_connection()
+    with connection.cursor() as cursor:
+      cursor.execute(
+          "SELECT id, usuario, tipo_usuario, departamento FROM usuarios"
+      )
+      resultado = cursor.fetchall()
+    connection.close()
 
-    if not df_usuarios.empty:
-      for _, row in df_usuarios.iterrows():
+    if resultado:
+      for row in resultado:
         # Contenedor visual para simular la tarjeta de cada usuario
         with st.container():
           cols = st.columns([2.5, 2, 2, 1, 1])
@@ -65,13 +82,13 @@ with tab_lista:
           with cols[4]:
             if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
               try:
-                with engine.begin() as conn:
-                  conn.execute(
-                      sqlalchemy.text(
-                          "DELETE FROM usuarios WHERE id = :id_val"
-                      ),
-                      {"id_val": row["id"]},
+                connection = get_connection()
+                with connection.cursor() as cursor:
+                  cursor.execute(
+                      "DELETE FROM usuarios WHERE id = %s", (row["id"],)
                   )
+                  connection.commit()
+                connection.close()
                 st.success(f"Usuario {row['usuario']} eliminado.")
                 st.rerun()
               except Exception as err:
@@ -120,22 +137,24 @@ with tab_crear:
         )
       else:
         try:
-          engine = get_connection()
-          with engine.begin() as conn:
-            query = sqlalchemy.text("""
+          connection = get_connection()
+          with connection.cursor() as cursor:
+            query = """
                             INSERT INTO usuarios (id, usuario, password, tipo_usuario, departamento) 
-                            VALUES (:id, :usuario, :password, :tipo_usuario, :departamento)
-                        """)
-            conn.execute(
+                            VALUES (%s, %s, %s, %s, %s)
+                        """
+            cursor.execute(
                 query,
-                {
-                    "id": nuevo_id,
-                    "usuario": nuevo_usuario,
-                    "password": nuevo_password,
-                    "tipo_usuario": nuevo_tipo,
-                    "departamento": nuevo_departamento,
-                },
+                (
+                    nuevo_id,
+                    nuevo_usuario,
+                    nuevo_password,
+                    nuevo_tipo,
+                    nuevo_departamento,
+                ),
             )
+            connection.commit()
+          connection.close()
 
           st.success(f"¡Usuario **{nuevo_usuario}** registrado exitosamente!")
           st.rerun()
