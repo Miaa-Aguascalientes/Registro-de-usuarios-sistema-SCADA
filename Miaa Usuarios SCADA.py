@@ -30,7 +30,7 @@ def get_connection():
 st.title("👥 Gestión de Usuarios del Sistema")
 st.markdown(
     "Administra las credenciales, tipos de usuario y departamentos de la base"
-    " de datos `miaamx_telemetria2`."
+    " de datos `miaamx_telemetria2` (tabla `usuarios`)."
 )
 
 # Pestañas principales
