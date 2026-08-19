@@ -1,3 +1,4 @@
+import random
 import pandas as pd
 import pymysql
 import streamlit as st
@@ -16,8 +17,6 @@ def get_connection():
 
   url = secrets["databases"]["url_dic"]
 
-  # Parseamos la URL de pymysql: mysql+pymysql://usuario:password@host/database
-  # Ejemplo: mysql+pymysql://miaamx_telemetria2:bWkrw1Uum1O&@miaa.mx/miaamx_telemetria2
   clean_url = url.replace("mysql+pymysql://", "")
   auth, rest = clean_url.split("@")
   user, password = auth.split(":")
@@ -58,7 +57,6 @@ with tab_lista:
 
     if resultado:
       for row in resultado:
-        # Contenedor visual para simular la tarjeta de cada usuario
         with st.container():
           cols = st.columns([2.5, 2, 2, 1, 1])
 
@@ -101,7 +99,7 @@ with tab_lista:
     st.error(f"Error al conectar con la base de datos: {e}")
 
 # -------------------------------------------------------------------------
-# 2. CREAR NUEVO USUARIO
+# 2. CREAR NUEVO USUARIO (ID generado automáticamente)
 # -------------------------------------------------------------------------
 with tab_crear:
   st.subheader("Registrar Nuevo Usuario")
@@ -110,7 +108,6 @@ with tab_crear:
     col1, col2 = st.columns(2)
 
     with col1:
-      nuevo_id = st.text_input("ID (Clave única)", key="create_user_id")
       nuevo_usuario = st.text_input("Nombre de Usuario", key="create_user_name")
       nuevo_password = st.text_input(
           "Contraseña", type="password", key="create_user_pwd"
@@ -130,13 +127,16 @@ with tab_crear:
     submitted = st.form_submit_button("Guardar Usuario")
 
     if submitted:
-      if not nuevo_id or not nuevo_usuario or not nuevo_password:
+      if not nuevo_usuario or not nuevo_password:
         st.error(
-            "Los campos ID, Usuario y Contraseña son obligatorios.",
+            "Los campos Nombre de Usuario y Contraseña son obligatorios.",
             icon="🚨",
         )
       else:
         try:
+          # Generación automática de un ID numérico aleatorio único de 10 dígitos (similar a tu ejemplo)
+          nuevo_id = str(random.randint(1000000000, 9999999999))
+
           connection = get_connection()
           with connection.cursor() as cursor:
             query = """
@@ -156,7 +156,10 @@ with tab_crear:
             connection.commit()
           connection.close()
 
-          st.success(f"¡Usuario **{nuevo_usuario}** registrado exitosamente!")
+          st.success(
+              f"¡Usuario **{nuevo_usuario}** registrado exitosamente con ID"
+              f" `{nuevo_id}`!"
+          )
           st.rerun()
         except Exception as e:
           st.error(f"Error al guardar el usuario en la base de datos: {e}")
