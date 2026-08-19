@@ -2,8 +2,8 @@ import hashlib
 import pandas as pd
 import streamlit as st
 
-# Conexión a la base de datos MySQL mediante los secretos de Streamlit
-conn = st.connection("mysql", type="sql")
+# Conexión a la base de datos MySQL usando la sección exacta de tus secretos
+conn = st.connection("mysql_telemetria", type="sql")
 
 st.title("👥 Gestión de Usuarios del Sistema")
 st.markdown(
