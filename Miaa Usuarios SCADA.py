@@ -4,16 +4,14 @@ import pymysql
 import streamlit as st
 
 
-# Función de conexión con diagnóstico de secretos
+# Función de conexión directa a MySQL utilizando tus credenciales exactas
 def get_connection():
   secrets = st.secrets
 
-  # Verificamos si existe la sección exacta en los secretos
   if "mysql_telemetria" not in secrets:
     st.error(
         "🚨 Error crítico: No se encontró la sección [mysql_telemetria] en los"
-        f" secretos. Secciones detectadas en Streamlit:"
-        f" {list(secrets.keys())}"
+        f" secretos. Secciones detectadas: {list(secrets.keys())}"
     )
     st.stop()
 
