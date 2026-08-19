@@ -2,15 +2,8 @@ import hashlib
 import pandas as pd
 import streamlit as st
 
-# Configuración de la conexión a MySQL usando los secretos de Streamlit
-# Asegúrate de tener configurado [connections.mysql] en tu archivo secrets.toml
+# Conexión a la base de datos MySQL mediante los secretos de Streamlit
 conn = st.connection("mysql", type="sql")
-
-
-def hash_password(password):
-  """Función opcional para hashear contraseñas con SHA-256 por seguridad."""
-  return hashlib.sha256(password.encode()).hexdigest()
-
 
 st.title("👥 Gestión de Usuarios del Sistema")
 st.markdown(
@@ -18,7 +11,7 @@ st.markdown(
     " de datos `miaamx_telemetria2`."
 )
 
-# Pestañas para organizar las acciones de administración
+# Pestañas principales
 tab_lista, tab_crear, tab_editar_eliminar = st.tabs([
     "📋 Lista de Usuarios",
     "➕ Nuevo Usuario",
@@ -30,8 +23,6 @@ tab_lista, tab_crear, tab_editar_eliminar = st.tabs([
 # -------------------------------------------------------------------------
 with tab_lista:
   st.subheader("Usuarios Registrados")
-
-  # Consultamos los usuarios existentes (excluyendo por seguridad el hash completo si se prefiere, o mostrándolo)
   df_usuarios = conn.query(
       "SELECT id, usuario, tipo_usuario, departamento FROM usuarios",
       ttl=0,
@@ -53,18 +44,24 @@ with tab_crear:
 
     with col1:
       nuevo_id = st.text_input(
-          "ID (Clave única o UUID)",
-          placeholder="Ej. U001 o ID alfanumérico",
+          "ID (Clave única)", key="create_user_id"
       )
-      nuevo_usuario = st.text_input("Nombre de Usuario")
-      nuevo_password = st.text_input("Contraseña", type="password")
+      nuevo_usuario = st.text_input(
+          "Nombre de Usuario", key="create_user_name"
+      )
+      nuevo_password = st.text_input(
+          "Contraseña", type="password", key="create_user_pwd"
+      )
 
     with col2:
-      # Opciones predefinidas o campos de texto libres según tu lógica de negocio
       tipo_usuario_opciones = ["Administrador", "Operador", "Consulta"]
-      nuevo_tipo = st.selectbox("Tipo de Usuario", tipo_usuario_opciones)
+      nuevo_tipo = st.selectbox(
+          "Tipo de Usuario", tipo_usuario_opciones, key="create_user_type"
+      )
       nuevo_departamento = st.text_input(
-          "Departamento", placeholder="Ej. Telemetría, Operaciones"
+          "Departamento",
+          placeholder="Ej. Telemetría, Operaciones",
+          key="create_user_dept",
       )
 
     submitted = st.form_submit_button("Guardar Usuario")
@@ -77,19 +74,17 @@ with tab_crear:
         )
       else:
         try:
-          # Nota: Si prefieres guardar la contraseña en texto plano, cambia nuevo_password por hash_password(nuevo_password)
           query = """
                         INSERT INTO usuarios (id, usuario, password, tipo_usuario, departamento) 
                         VALUES (:id, :usuario, :password, :tipo_usuario, :departamento)
                     """
-
           with conn.session as s:
             s.execute(
                 query,
                 {
                     "id": nuevo_id,
                     "usuario": nuevo_usuario,
-                    "password": nuevo_password,  # Usa hash_password(nuevo_password) si lo requieres cifrado
+                    "password": nuevo_password,
                     "tipo_usuario": nuevo_tipo,
                     "departamento": nuevo_departamento,
                 },
@@ -117,12 +112,12 @@ with tab_editar_eliminar:
   if df_existentes.empty:
     st.warning("No hay usuarios disponibles para editar.")
   else:
-    # Seleccionamos el usuario mediante su nombre de usuario o ID
     usuario_seleccionado = st.selectbox(
-        "Selecciona el usuario a gestionar", df_existentes["usuario"].tolist()
+        "Selecciona el usuario a gestionar",
+        df_existentes["usuario"].tolist(),
+        key="select_user_to_edit",
     )
 
-    # Filtrar datos del usuario seleccionado
     user_data = df_existentes[
         df_existentes["usuario"] == usuario_seleccionado
     ].iloc[0]
@@ -130,21 +125,29 @@ with tab_editar_eliminar:
     with st.form("form_editar_usuario"):
       st.markdown(f"Editando al usuario: **{usuario_seleccionado}**")
 
-      edit_id = st.text_input("ID", value=str(user_data["id"]), disabled=True)
-      edit_usuario = st.text_input("Nombre de Usuario", value=str(user_data["usuario"]))
-      
-      # Campo opcional para cambiar contraseña (si se deja vacío, podemos conservar la anterior)
+      edit_id = st.text_input(
+          "ID", value=str(user_data["id"]), disabled=True, key="edit_user_id"
+      )
+      edit_usuario = st.text_input(
+          "Nombre de Usuario",
+          value=str(user_data["usuario"]),
+          key="edit_user_name",
+      )
       edit_password = st.text_input(
           "Nueva Contraseña (dejar en blanco para no cambiar)",
           type="password",
           value="",
+          key="edit_user_pwd",
       )
-      
       edit_tipo = st.text_input(
-          "Tipo de Usuario", value=str(user_data["tipo_usuario"])
+          "Tipo de Usuario",
+          value=str(user_data["tipo_usuario"]),
+          key="edit_user_type",
       )
       edit_departamento = st.text_input(
-          "Departamento", value=str(user_data["departamento"])
+          "Departamento",
+          value=str(user_data["departamento"]),
+          key="edit_user_dept",
       )
 
       col_update, col_delete = st.columns(2)
@@ -155,7 +158,6 @@ with tab_editar_eliminar:
 
       if actualizar:
         try:
-          # Si no ingresó una nueva contraseña, mantenemos la existente en la BD
           pwd_to_save = (
               edit_password if edit_password != "" else user_data["password"]
           )
