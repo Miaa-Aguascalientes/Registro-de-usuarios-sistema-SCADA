@@ -38,8 +38,12 @@ st.markdown(
     " de datos `miaamx_telemetria2` (tabla `usuarios`)."
 )
 
-# Pestañas principales
-tab_lista, tab_crear = st.tabs(["📋 Lista de Usuarios", "➕ Nuevo Usuario"])
+# Pestañas principales incluyendo la de edición
+tab_lista, tab_crear, tab_editar = st.tabs([
+    "📋 Lista de Usuarios",
+    "➕ Nuevo Usuario",
+    "✏️ Editar Usuario",
+])
 
 # -------------------------------------------------------------------------
 # 1. LISTA DE USUARIOS Y BUSCADOR
@@ -47,7 +51,6 @@ tab_lista, tab_crear = st.tabs(["📋 Lista de Usuarios", "➕ Nuevo Usuario"])
 with tab_lista:
   st.subheader("Usuarios Registrados")
 
-  # Campo de búsqueda
   busqueda = st.text_input(
       "🔍 Buscar usuario por nombre, departamento o tipo",
       placeholder="Escribe para filtrar...",
@@ -63,10 +66,8 @@ with tab_lista:
     connection.close()
 
     if resultado:
-      # Convertimos a DataFrame para facilitar el filtrado con el buscador
       df_usuarios = pd.DataFrame(resultado)
 
-      # Aplicar filtro de búsqueda si el usuario escribió algo
       if busqueda:
         query_filtro = (
             df_usuarios["usuario"].str.contains(busqueda, case=False, na=False)
@@ -181,3 +182,99 @@ with tab_crear:
           st.rerun()
         except Exception as e:
           st.error(f"Error al guardar el usuario en la base de datos: {e}")
+
+# -------------------------------------------------------------------------
+# 3. EDITAR USUARIO EXISTENTE
+# -------------------------------------------------------------------------
+with tab_editar:
+  st.subheader("Modificar Datos de Usuario")
+
+  try:
+    connection = get_connection()
+    with connection.cursor() as cursor:
+      cursor.execute(
+          "SELECT id, usuario, password, tipo_usuario, departamento FROM usuarios"
+      )
+      lista_editables = cursor.fetchall()
+    connection.close()
+  except Exception as e:
+    lista_editables = []
+    st.error(f"Error al cargar usuarios para edición: {e}")
+
+  if not lista_editables:
+    st.warning("No hay usuarios disponibles para editar.")
+  else:
+    # Diccionario para mapear el nombre seleccionado con su registro completo
+    nombres_usuarios = [u["usuario"] for u in lista_editables]
+    usuario_seleccionado_nombre = st.selectbox(
+        "Selecciona el usuario que deseas modificar", nombres_usuarios
+    )
+
+    # Buscar los datos del usuario seleccionado
+    user_data = next(
+        u for u in lista_editables if u["usuario"] == usuario_seleccionado_nombre
+    )
+
+    with st.form("form_editar_usuario"):
+      col_e1, col_e2 = st.columns(2)
+
+      with col_e1:
+        edit_usuario = st.text_input(
+            "Nombre de Usuario", value=user_data["usuario"]
+        )
+        edit_password = st.text_input(
+            "Nueva Contraseña (dejar en blanco para mantener la actual)",
+            type="password",
+            value="",
+        )
+
+      with col_e2:
+        tipo_usuario_opciones = ["Administrador", "Operador", "Consulta"]
+        # Validar si el tipo actual está en las opciones, si no poner el primero por defecto
+        try:
+          index_tipo = tipo_usuario_opciones.index(user_data["tipo_usuario"])
+        except ValueError:
+          index_tipo = 0
+
+        edit_tipo = st.selectbox(
+            "Tipo de Usuario", tipo_usuario_opciones, index=index_tipo
+        )
+        edit_departamento = st.text_input(
+            "Departamento", value=str(user_data["departamento"] or "")
+        )
+
+      actualizar_btn = st.form_submit_button("Guardar Cambios")
+
+      if actualizar_btn:
+        try:
+          # Si no escribió nueva contraseña, conservamos la que ya tenía en la base de datos
+          pwd_a_guardar = (
+              edit_password if edit_password != "" else user_data["password"]
+          )
+
+          connection = get_connection()
+          with connection.cursor() as cursor:
+            query_update = """
+                            UPDATE usuarios 
+                            SET usuario = %s, password = %s, tipo_usuario = %s, departamento = %s 
+                            WHERE id = %s
+                        """
+            cursor.execute(
+                query_update,
+                (
+                    edit_usuario,
+                    pwd_a_guardar,
+                    edit_tipo,
+                    edit_departamento,
+                    user_data["id"],
+                ),
+            )
+            connection.commit()
+          connection.close()
+
+          st.success(
+              f"¡El usuario **{edit_usuario}** ha sido actualizado correctamente!"
+          )
+          st.rerun()
+        except Exception as e:
+          st.error(f"Error al actualizar el usuario: {e}")
