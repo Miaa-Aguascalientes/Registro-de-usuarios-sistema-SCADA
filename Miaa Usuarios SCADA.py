@@ -1,10 +1,9 @@
-import hashlib
 import pandas as pd
 import pymysql
 import streamlit as st
 
 
-# Función de conexión directa a MySQL utilizando tus credenciales exactas
+# Función de conexión directa a MySQL
 def get_connection():
   secrets = st.secrets
 
@@ -34,30 +33,64 @@ st.markdown(
 )
 
 # Pestañas principales
-tab_lista, tab_crear, tab_editar_eliminar = st.tabs([
-    "📋 Lista de Usuarios",
-    "➕ Nuevo Usuario",
-    "✏️ Editar / Eliminar",
-])
+tab_lista, tab_crear = st.tabs(["📋 Lista de Usuarios", "➕ Nuevo Usuario"])
 
 # -------------------------------------------------------------------------
-# 1. LISTA DE USUARIOS
+# 1. LISTA DE USUARIOS (Diseño personalizado por filas)
 # -------------------------------------------------------------------------
 with tab_lista:
   st.subheader("Usuarios Registrados")
   try:
     connection = get_connection()
     with connection.cursor() as cursor:
+      # Asumiendo que tu tabla tiene un campo 'estatus' o 'activo' (si no lo tienes, puedes agregarlo o adaptarlo)
       cursor.execute(
           "SELECT id, usuario, tipo_usuario, departamento FROM usuarios"
       )
       resultado = cursor.fetchall()
     connection.close()
 
-    df_usuarios = pd.DataFrame(resultado)
+    if resultado:
+      for row in resultado:
+        # Contenedor visual para simular la tarjeta de cada usuario
+        with st.container():
+          cols = st.columns([2.5, 2, 2, 1, 1])
 
-    if not df_usuarios.empty:
-      st.dataframe(df_usuarios, use_container_width=True)
+          with cols[0]:
+            st.markdown(f"👤 **{row['usuario']}**")
+
+          with cols[1]:
+            st.markdown(f"💬 ID: `{row['id']}`")
+
+          with cols[2]:
+            st.markdown(f"🏢 {row['departamento']}")
+
+          with cols[3]:
+            # Interruptor de estado visual por fila
+            st.toggle(
+                "Activo",
+                value=True,
+                key=f"status_{row['id']}",
+                label_visibility="collapsed",
+            )
+
+          with cols[4]:
+            # Botón de eliminar individual por registro
+            if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
+              try:
+                connection = get_connection()
+                with connection.cursor() as cursor:
+                  cursor.execute(
+                      "DELETE FROM usuarios WHERE id = %s", (row["id"],)
+                  )
+                  connection.commit()
+                connection.close()
+                st.success(f"Usuario {row['usuario']} eliminado.")
+                st.rerun()
+              except Exception as err:
+                st.error(f"Error al eliminar: {err}")
+
+          st.markdown("---")
     else:
       st.info("No hay usuarios registrados en la base de datos.")
   except Exception as e:
@@ -123,118 +156,3 @@ with tab_crear:
           st.rerun()
         except Exception as e:
           st.error(f"Error al guardar el usuario en la base de datos: {e}")
-
-# -------------------------------------------------------------------------
-# 3. EDITAR O ELIMINAR USUARIO
-# -------------------------------------------------------------------------
-with tab_editar_eliminar:
-  st.subheader("Modificar o Eliminar Usuarios Existentes")
-
-  try:
-    connection = get_connection()
-    with connection.cursor() as cursor:
-      cursor.execute(
-          "SELECT id, usuario, password, tipo_usuario, departamento FROM usuarios"
-      )
-      resultado_existentes = cursor.fetchall()
-    connection.close()
-
-    df_existentes = pd.DataFrame(resultado_existentes)
-  except Exception as e:
-    df_existentes = pd.DataFrame()
-    st.error(f"Error al cargar los usuarios: {e}")
-
-  if df_existentes.empty:
-    st.warning("No hay usuarios disponibles para editar.")
-  else:
-    usuario_seleccionado = st.selectbox(
-        "Selecciona el usuario a gestionar",
-        df_existentes["usuario"].tolist(),
-        key="select_user_to_edit",
-    )
-
-    user_data = df_existentes[
-        df_existentes["usuario"] == usuario_seleccionado
-    ].iloc[0]
-
-    with st.form("form_editar_usuario"):
-      st.markdown(f"Editando al usuario: **{usuario_seleccionado}**")
-
-      edit_id = st.text_input(
-          "ID", value=str(user_data["id"]), disabled=True, key="edit_user_id"
-      )
-      edit_usuario = st.text_input(
-          "Nombre de Usuario",
-          value=str(user_data["usuario"]),
-          key="edit_user_name",
-      )
-      edit_password = st.text_input(
-          "Nueva Contraseña (dejar en blanco para no cambiar)",
-          type="password",
-          value="",
-          key="edit_user_pwd",
-      )
-      edit_tipo = st.text_input(
-          "Tipo de Usuario",
-          value=str(user_data["tipo_usuario"]),
-          key="edit_user_type",
-      )
-      edit_departamento = st.text_input(
-          "Departamento",
-          value=str(user_data["departamento"]),
-          key="edit_user_dept",
-      )
-
-      col_update, col_delete = st.columns(2)
-      actualizar = col_update.form_submit_button("Actualizar Cambios")
-      eliminar = col_delete.form_submit_button(
-          "Eliminar Usuario", type="primary"
-      )
-
-      if actualizar:
-        try:
-          pwd_to_save = (
-              edit_password if edit_password != "" else user_data["password"]
-          )
-
-          connection = get_connection()
-          with connection.cursor() as cursor:
-            query_update = """
-                            UPDATE usuarios 
-                            SET usuario = %s, password = %s, tipo_usuario = %s, departamento = %s 
-                            WHERE id = %s
-                        """
-            cursor.execute(
-                query_update,
-                (
-                    edit_usuario,
-                    pwd_to_save,
-                    edit_tipo,
-                    edit_departamento,
-                    user_data["id"],
-                ),
-            )
-            connection.commit()
-          connection.close()
-
-          st.success("¡Usuario actualizado correctamente!")
-          st.rerun()
-        except Exception as e:
-          st.error(f"Error al actualizar: {e}")
-
-      if eliminar:
-        try:
-          connection = get_connection()
-          with connection.cursor() as cursor:
-            query_delete = "DELETE FROM usuarios WHERE id = %s"
-            cursor.execute(query_delete, (user_data["id"],))
-            connection.commit()
-          connection.close()
-
-          st.success(
-              f"El usuario **{usuario_seleccionado}** ha sido eliminado"
-              " correctamente."
-          )
-          st.rerun()
-        except Exception as e:
-          st.error(f"Error al eliminar el usuario: {e}")
