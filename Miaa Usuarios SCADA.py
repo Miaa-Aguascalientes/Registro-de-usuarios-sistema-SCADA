@@ -49,7 +49,6 @@ with tab_lista:
   try:
     connection = get_connection()
     with connection.cursor() as cursor:
-      # Consulta únicamente las columnas estándar de tu tabla
       cursor.execute(
           "SELECT id, usuario, tipo_usuario, departamento FROM usuarios"
       )
@@ -59,7 +58,8 @@ with tab_lista:
     if resultado:
       for row in resultado:
         with st.container():
-          cols = st.columns([3, 2, 2, 1, 1])
+          # Ajustamos las columnas ya sin el toggle (4 columnas en lugar de 5)
+          cols = st.columns([3, 2, 2, 1])
 
           with cols[0]:
             st.markdown(f"👤 **{row['usuario']}**")
@@ -71,15 +71,6 @@ with tab_lista:
             st.markdown(f"📌 *{row['tipo_usuario']}*")
 
           with cols[3]:
-            # Interruptor visual (activo por defecto en la interfaz)
-            st.toggle(
-                "Activo",
-                value=True,
-                key=f"status_{row['id']}",
-                label_visibility="collapsed",
-            )
-
-          with cols[4]:
             if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
               try:
                 connection = get_connection()
