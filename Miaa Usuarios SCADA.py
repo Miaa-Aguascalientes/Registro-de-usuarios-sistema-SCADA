@@ -1,29 +1,22 @@
 import pandas as pd
-import pymysql
+import sqlalchemy
 import streamlit as st
 
 
-# Función de conexión directa a MySQL
+# Función de conexión utilizando la URL directa de los secretos
 def get_connection():
   secrets = st.secrets
 
-  if "mysql_telemetria" not in secrets:
+  if "databases" not in secrets or "url_dic" not in secrets["databases"]:
     st.error(
-        "🚨 Error crítico: No se encontró la sección [mysql_telemetria] en los"
-        f" secretos. Secciones detectadas: {list(secrets.keys())}"
+        "🚨 Error crítico: No se encontró la sección [databases] o la llave"
+        " 'url_dic' en los secretos de Streamlit."
     )
     st.stop()
 
-  db_config = secrets["mysql_telemetria"]
-
-  return pymysql.connect(
-      host=db_config["host"],
-      user=db_config["user"],
-      password=db_config["password"],
-      database=db_config["database"],
-      port=3306,
-      cursorclass=pymysql.cursors.DictCursor,
-  )
+  db_url = secrets["databases"]["url_dic"]
+  engine = sqlalchemy.create_engine(db_url)
+  return engine
 
 
 st.title("👥 Gestión de Usuarios del Sistema")
@@ -41,17 +34,13 @@ tab_lista, tab_crear = st.tabs(["📋 Lista de Usuarios", "➕ Nuevo Usuario"])
 with tab_lista:
   st.subheader("Usuarios Registrados")
   try:
-    connection = get_connection()
-    with connection.cursor() as cursor:
-      # Asumiendo que tu tabla tiene un campo 'estatus' o 'activo' (si no lo tienes, puedes agregarlo o adaptarlo)
-      cursor.execute(
-          "SELECT id, usuario, tipo_usuario, departamento FROM usuarios"
-      )
-      resultado = cursor.fetchall()
-    connection.close()
+    engine = get_connection()
+    df_usuarios = pd.read_sql(
+        "SELECT id, usuario, tipo_usuario, departamento FROM usuarios", engine
+    )
 
-    if resultado:
-      for row in resultado:
+    if not df_usuarios.empty:
+      for _, row in df_usuarios.iterrows():
         # Contenedor visual para simular la tarjeta de cada usuario
         with st.container():
           cols = st.columns([2.5, 2, 2, 1, 1])
@@ -66,7 +55,6 @@ with tab_lista:
             st.markdown(f"🏢 {row['departamento']}")
 
           with cols[3]:
-            # Interruptor de estado visual por fila
             st.toggle(
                 "Activo",
                 value=True,
@@ -75,16 +63,15 @@ with tab_lista:
             )
 
           with cols[4]:
-            # Botón de eliminar individual por registro
             if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
               try:
-                connection = get_connection()
-                with connection.cursor() as cursor:
-                  cursor.execute(
-                      "DELETE FROM usuarios WHERE id = %s", (row["id"],)
+                with engine.begin() as conn:
+                  conn.execute(
+                      sqlalchemy.text(
+                          "DELETE FROM usuarios WHERE id = :id_val"
+                      ),
+                      {"id_val": row["id"]},
                   )
-                  connection.commit()
-                connection.close()
                 st.success(f"Usuario {row['usuario']} eliminado.")
                 st.rerun()
               except Exception as err:
@@ -133,24 +120,22 @@ with tab_crear:
         )
       else:
         try:
-          connection = get_connection()
-          with connection.cursor() as cursor:
-            query = """
+          engine = get_connection()
+          with engine.begin() as conn:
+            query = sqlalchemy.text("""
                             INSERT INTO usuarios (id, usuario, password, tipo_usuario, departamento) 
-                            VALUES (%s, %s, %s, %s, %s)
-                        """
-            cursor.execute(
+                            VALUES (:id, :usuario, :password, :tipo_usuario, :departamento)
+                        """)
+            conn.execute(
                 query,
-                (
-                    nuevo_id,
-                    nuevo_usuario,
-                    nuevo_password,
-                    nuevo_tipo,
-                    nuevo_departamento,
-                ),
+                {
+                    "id": nuevo_id,
+                    "usuario": nuevo_usuario,
+                    "password": nuevo_password,
+                    "tipo_usuario": nuevo_tipo,
+                    "departamento": nuevo_departamento,
+                },
             )
-            connection.commit()
-          connection.close()
 
           st.success(f"¡Usuario **{nuevo_usuario}** registrado exitosamente!")
           st.rerun()
