@@ -4,14 +4,26 @@ import pymysql
 import streamlit as st
 
 
-# Función de conexión directa a MySQL usando pymysql y los secretos
+# Función de conexión con diagnóstico de secretos
 def get_connection():
-  db_config = st.secrets["mysql_telemetria"]
+  secrets = st.secrets
+
+  # Verificamos si existe la sección exacta en los secretos
+  if "mysql_telemetria" not in secrets:
+    st.error(
+        "🚨 Error crítico: No se encontró la sección [mysql_telemetria] en los"
+        f" secretos. Secciones detectadas en Streamlit:"
+        f" {list(secrets.keys())}"
+    )
+    st.stop()
+
+  db_config = secrets["mysql_telemetria"]
+
   return pymysql.connect(
-      host=db_config["miaa.mx"],
-      user=db_config["miaamx_telemetria2"],
-      password=db_config["bWkrw1Uum1O&"],
-      database=db_config["miaamx_telemetria2"],
+      host=db_config["host"],
+      user=db_config["user"],
+      password=db_config["password"],
+      database=db_config["database"],
       port=3306,
       cursorclass=pymysql.cursors.DictCursor,
   )
