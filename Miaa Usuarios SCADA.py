@@ -42,15 +42,17 @@ st.markdown(
 tab_lista, tab_crear = st.tabs(["📋 Lista de Usuarios", "➕ Nuevo Usuario"])
 
 # -------------------------------------------------------------------------
-# 1. LISTA DE USUARIOS (Diseño personalizado por filas)
+# 1. LISTA DE USUARIOS
 # -------------------------------------------------------------------------
 with tab_lista:
   st.subheader("Usuarios Registrados")
   try:
     connection = get_connection()
     with connection.cursor() as cursor:
+      # Asegúrate de que tu tabla tenga la columna 'estatus' (1 para activo, 0 para inactivo)
+      # Si tu columna se llama diferente (ej. 'activo'), cámbiala en el SELECT y en el UPDATE
       cursor.execute(
-          "SELECT id, usuario, tipo_usuario, departamento FROM usuarios"
+          "SELECT id, usuario, tipo_usuario, departamento, estatus FROM usuarios"
       )
       resultado = cursor.fetchall()
     connection.close()
@@ -58,24 +60,45 @@ with tab_lista:
     if resultado:
       for row in resultado:
         with st.container():
-          cols = st.columns([2.5, 2, 2, 1, 1])
+          # Reestructuramos las columnas quitando el espacio del ID
+          cols = st.columns([3, 2, 2, 1, 1])
 
           with cols[0]:
             st.markdown(f"👤 **{row['usuario']}**")
 
           with cols[1]:
-            st.markdown(f"💬 ID: `{row['id']}`")
-
-          with cols[2]:
             st.markdown(f"🏢 {row['departamento']}")
 
+          with cols[2]:
+            st.markdown(f"📌 *{row['tipo_usuario']}*")
+
           with cols[3]:
-            st.toggle(
+            # El estado actual viene de la base de datos (1 = True, 0 = False)
+            estado_actual = True if row.get("estatus", 1) == 1 else False
+
+            nuevo_estado = st.toggle(
                 "Activo",
-                value=True,
+                value=estado_actual,
                 key=f"status_{row['id']}",
                 label_visibility="collapsed",
             )
+
+            # Si el usuario cambia el interruptor, actualizamos la base de datos de inmediato
+            if nuevo_estado != estado_actual:
+              try:
+                val_db = 1 if nuevo_estado else 0
+                connection = get_connection()
+                with connection.cursor() as cursor:
+                  cursor.execute(
+                      "UPDATE usuarios SET estatus = %s WHERE id = %s",
+                      (val_db, row["id"]),
+                  )
+                  connection.commit()
+                connection.close()
+                st.toast(f"Acceso actualizado para {row['usuario']}")
+                st.rerun()
+              except Exception as err:
+                st.error(f"Error al actualizar estado: {err}")
 
           with cols[4]:
             if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
@@ -99,7 +122,7 @@ with tab_lista:
     st.error(f"Error al conectar con la base de datos: {e}")
 
 # -------------------------------------------------------------------------
-# 2. CREAR NUEVO USUARIO (ID generado automáticamente)
+# 2. CREAR NUEVO USUARIO
 # -------------------------------------------------------------------------
 with tab_crear:
   st.subheader("Registrar Nuevo Usuario")
@@ -134,14 +157,14 @@ with tab_crear:
         )
       else:
         try:
-          # Generación automática de un ID numérico aleatorio único de 10 dígitos (similar a tu ejemplo)
           nuevo_id = str(random.randint(1000000000, 9999999999))
 
           connection = get_connection()
           with connection.cursor() as cursor:
+            # Por defecto, el usuario se crea con estatus = 1 (Activo)
             query = """
-                            INSERT INTO usuarios (id, usuario, password, tipo_usuario, departamento) 
-                            VALUES (%s, %s, %s, %s, %s)
+                            INSERT INTO usuarios (id, usuario, password, tipo_usuario, departamento, estatus) 
+                            VALUES (%s, %s, %s, %s, %s, 1)
                         """
             cursor.execute(
                 query,
@@ -157,8 +180,7 @@ with tab_crear:
           connection.close()
 
           st.success(
-              f"¡Usuario **{nuevo_usuario}** registrado exitosamente con ID"
-              f" `{nuevo_id}`!"
+              f"¡Usuario **{nuevo_usuario}** registrado exitosamente!"
           )
           st.rerun()
         except Exception as e:
