@@ -42,10 +42,17 @@ st.markdown(
 tab_lista, tab_crear = st.tabs(["📋 Lista de Usuarios", "➕ Nuevo Usuario"])
 
 # -------------------------------------------------------------------------
-# 1. LISTA DE USUARIOS
+# 1. LISTA DE USUARIOS Y BUSCADOR
 # -------------------------------------------------------------------------
 with tab_lista:
   st.subheader("Usuarios Registrados")
+
+  # Campo de búsqueda
+  busqueda = st.text_input(
+      "🔍 Buscar usuario por nombre, departamento o tipo",
+      placeholder="Escribe para filtrar...",
+  )
+
   try:
     connection = get_connection()
     with connection.cursor() as cursor:
@@ -56,36 +63,56 @@ with tab_lista:
     connection.close()
 
     if resultado:
-      for row in resultado:
-        with st.container():
-          # Ajustamos las columnas ya sin el toggle (4 columnas en lugar de 5)
-          cols = st.columns([3, 2, 2, 1])
+      # Convertimos a DataFrame para facilitar el filtrado con el buscador
+      df_usuarios = pd.DataFrame(resultado)
 
-          with cols[0]:
-            st.markdown(f"👤 **{row['usuario']}**")
+      # Aplicar filtro de búsqueda si el usuario escribió algo
+      if busqueda:
+        query_filtro = (
+            df_usuarios["usuario"].str.contains(busqueda, case=False, na=False)
+            | df_usuarios["departamento"].str.contains(
+                busqueda, case=False, na=False
+            )
+            | df_usuarios["tipo_usuario"].str.contains(
+                busqueda, case=False, na=False
+            )
+        )
+        df_usuarios = df_usuarios[query_filtro]
 
-          with cols[1]:
-            st.markdown(f"🏢 {row['departamento']}")
+      if not df_usuarios.empty:
+        for _, row in df_usuarios.iterrows():
+          with st.container():
+            cols = st.columns([3, 2, 2, 1])
 
-          with cols[2]:
-            st.markdown(f"📌 *{row['tipo_usuario']}*")
+            with cols[0]:
+              st.markdown(f"👤 **{row['usuario']}**")
 
-          with cols[3]:
-            if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
-              try:
-                connection = get_connection()
-                with connection.cursor() as cursor:
-                  cursor.execute(
-                      "DELETE FROM usuarios WHERE id = %s", (row["id"],)
-                  )
-                  connection.commit()
-                connection.close()
-                st.success(f"Usuario {row['usuario']} eliminado.")
-                st.rerun()
-              except Exception as err:
-                st.error(f"Error al eliminar: {err}")
+            with cols[1]:
+              st.markdown(f"🏢 {row['departamento']}")
 
-          st.markdown("---")
+            with cols[2]:
+              st.markdown(f"📌 *{row['tipo_usuario']}*")
+
+            with cols[3]:
+              if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
+                try:
+                  connection = get_connection()
+                  with connection.cursor() as cursor:
+                    cursor.execute(
+                        "DELETE FROM usuarios WHERE id = %s", (row["id"],)
+                    )
+                    connection.commit()
+                  connection.close()
+                  st.success(f"Usuario {row['usuario']} eliminado.")
+                  st.rerun()
+                except Exception as err:
+                  st.error(f"Error al eliminar: {err}")
+
+            st.markdown("---")
+      else:
+        st.warning(
+            "No se encontraron usuarios que coincidan con la búsqueda."
+        )
     else:
       st.info("No hay usuarios registrados en la base de datos.")
   except Exception as e:
