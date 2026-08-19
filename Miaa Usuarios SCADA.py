@@ -1,9 +1,21 @@
 import hashlib
 import pandas as pd
+import pymysql
 import streamlit as st
 
-# Conexión a la base de datos MySQL usando la sección exacta de tus secretos
-conn = st.connection("mysql_telemetria", type="sql")
+
+# Función de conexión directa a MySQL usando pymysql y los secretos
+def get_connection():
+  db_config = st.secrets["mysql_telemetria"]
+  return pymysql.connect(
+      host=db_config["miaa.mx"],
+      user=db_config["miaamx_telemetria2"],
+      password=db_config["bWkrw1Uum1O&"],
+      database=db_config["miaamx_telemetria2"],
+      port=3306,
+      cursorclass=pymysql.cursors.DictCursor,
+  )
+
 
 st.title("👥 Gestión de Usuarios del Sistema")
 st.markdown(
@@ -23,15 +35,23 @@ tab_lista, tab_crear, tab_editar_eliminar = st.tabs([
 # -------------------------------------------------------------------------
 with tab_lista:
   st.subheader("Usuarios Registrados")
-  df_usuarios = conn.query(
-      "SELECT id, usuario, tipo_usuario, departamento FROM usuarios",
-      ttl=0,
-  )
+  try:
+    connection = get_connection()
+    with connection.cursor() as cursor:
+      cursor.execute(
+          "SELECT id, usuario, tipo_usuario, departamento FROM usuarios"
+      )
+      resultado = cursor.fetchall()
+    connection.close()
 
-  if not df_usuarios.empty:
-    st.dataframe(df_usuarios, use_container_width=True)
-  else:
-    st.info("No hay usuarios registrados en la base de datos.")
+    df_usuarios = pd.DataFrame(resultado)
+
+    if not df_usuarios.empty:
+      st.dataframe(df_usuarios, use_container_width=True)
+    else:
+      st.info("No hay usuarios registrados en la base de datos.")
+  except Exception as e:
+    st.error(f"Error al conectar con la base de datos: {e}")
 
 # -------------------------------------------------------------------------
 # 2. CREAR NUEVO USUARIO
@@ -43,12 +63,8 @@ with tab_crear:
     col1, col2 = st.columns(2)
 
     with col1:
-      nuevo_id = st.text_input(
-          "ID (Clave única)", key="create_user_id"
-      )
-      nuevo_usuario = st.text_input(
-          "Nombre de Usuario", key="create_user_name"
-      )
+      nuevo_id = st.text_input("ID (Clave única)", key="create_user_id")
+      nuevo_usuario = st.text_input("Nombre de Usuario", key="create_user_name")
       nuevo_password = st.text_input(
           "Contraseña", type="password", key="create_user_pwd"
       )
@@ -74,26 +90,26 @@ with tab_crear:
         )
       else:
         try:
-          query = """
-                        INSERT INTO usuarios (id, usuario, password, tipo_usuario, departamento) 
-                        VALUES (:id, :usuario, :password, :tipo_usuario, :departamento)
-                    """
-          with conn.session as s:
-            s.execute(
+          connection = get_connection()
+          with connection.cursor() as cursor:
+            query = """
+                            INSERT INTO usuarios (id, usuario, password, tipo_usuario, departamento) 
+                            VALUES (%s, %s, %s, %s, %s)
+                        """
+            cursor.execute(
                 query,
-                {
-                    "id": nuevo_id,
-                    "usuario": nuevo_usuario,
-                    "password": nuevo_password,
-                    "tipo_usuario": nuevo_tipo,
-                    "departamento": nuevo_departamento,
-                },
+                (
+                    nuevo_id,
+                    nuevo_usuario,
+                    nuevo_password,
+                    nuevo_tipo,
+                    nuevo_departamento,
+                ),
             )
-            s.commit()
+            connection.commit()
+          connection.close()
 
-          st.success(
-              f"¡Usuario **{nuevo_usuario}** registrado exitosamente!"
-          )
+          st.success(f"¡Usuario **{nuevo_usuario}** registrado exitosamente!")
           st.rerun()
         except Exception as e:
           st.error(f"Error al guardar el usuario en la base de datos: {e}")
@@ -104,10 +120,19 @@ with tab_crear:
 with tab_editar_eliminar:
   st.subheader("Modificar o Eliminar Usuarios Existentes")
 
-  df_existentes = conn.query(
-      "SELECT id, usuario, password, tipo_usuario, departamento FROM usuarios",
-      ttl=0,
-  )
+  try:
+    connection = get_connection()
+    with connection.cursor() as cursor:
+      cursor.execute(
+          "SELECT id, usuario, password, tipo_usuario, departamento FROM usuarios"
+      )
+      resultado_existentes = cursor.fetchall()
+    connection.close()
+
+    df_existentes = pd.DataFrame(resultado_existentes)
+  except Exception as e:
+    df_existentes = pd.DataFrame()
+    st.error(f"Error al cargar los usuarios: {e}")
 
   if df_existentes.empty:
     st.warning("No hay usuarios disponibles para editar.")
@@ -162,23 +187,25 @@ with tab_editar_eliminar:
               edit_password if edit_password != "" else user_data["password"]
           )
 
-          query_update = """
-                        UPDATE usuarios 
-                        SET usuario = :usuario, password = :password, tipo_usuario = :tipo_usuario, departamento = :departamento 
-                        WHERE id = :id
-                    """
-          with conn.session as s:
-            s.execute(
+          connection = get_connection()
+          with connection.cursor() as cursor:
+            query_update = """
+                            UPDATE usuarios 
+                            SET usuario = %s, password = %s, tipo_usuario = %s, departamento = %s 
+                            WHERE id = %s
+                        """
+            cursor.execute(
                 query_update,
-                {
-                    "usuario": edit_usuario,
-                    "password": pwd_to_save,
-                    "tipo_usuario": edit_tipo,
-                    "departamento": edit_departamento,
-                    "id": user_data["id"],
-                },
+                (
+                    edit_usuario,
+                    pwd_to_save,
+                    edit_tipo,
+                    edit_departamento,
+                    user_data["id"],
+                ),
             )
-            s.commit()
+            connection.commit()
+          connection.close()
 
           st.success("¡Usuario actualizado correctamente!")
           st.rerun()
@@ -187,10 +214,12 @@ with tab_editar_eliminar:
 
       if eliminar:
         try:
-          query_delete = "DELETE FROM usuarios WHERE id = :id"
-          with conn.session as s:
-            s.execute(query_delete, {"id": user_data["id"]})
-            s.commit()
+          connection = get_connection()
+          with connection.cursor() as cursor:
+            query_delete = "DELETE FROM usuarios WHERE id = %s"
+            cursor.execute(query_delete, (user_data["id"],))
+            connection.commit()
+          connection.close()
 
           st.success(
               f"El usuario **{usuario_seleccionado}** ha sido eliminado"
