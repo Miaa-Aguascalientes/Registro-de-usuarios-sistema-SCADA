@@ -49,10 +49,9 @@ with tab_lista:
   try:
     connection = get_connection()
     with connection.cursor() as cursor:
-      # Asegúrate de que tu tabla tenga la columna 'estatus' (1 para activo, 0 para inactivo)
-      # Si tu columna se llama diferente (ej. 'activo'), cámbiala en el SELECT y en el UPDATE
+      # Consulta únicamente las columnas estándar de tu tabla
       cursor.execute(
-          "SELECT id, usuario, tipo_usuario, departamento, estatus FROM usuarios"
+          "SELECT id, usuario, tipo_usuario, departamento FROM usuarios"
       )
       resultado = cursor.fetchall()
     connection.close()
@@ -60,7 +59,6 @@ with tab_lista:
     if resultado:
       for row in resultado:
         with st.container():
-          # Reestructuramos las columnas quitando el espacio del ID
           cols = st.columns([3, 2, 2, 1, 1])
 
           with cols[0]:
@@ -73,32 +71,13 @@ with tab_lista:
             st.markdown(f"📌 *{row['tipo_usuario']}*")
 
           with cols[3]:
-            # El estado actual viene de la base de datos (1 = True, 0 = False)
-            estado_actual = True if row.get("estatus", 1) == 1 else False
-
-            nuevo_estado = st.toggle(
+            # Interruptor visual (activo por defecto en la interfaz)
+            st.toggle(
                 "Activo",
-                value=estado_actual,
+                value=True,
                 key=f"status_{row['id']}",
                 label_visibility="collapsed",
             )
-
-            # Si el usuario cambia el interruptor, actualizamos la base de datos de inmediato
-            if nuevo_estado != estado_actual:
-              try:
-                val_db = 1 if nuevo_estado else 0
-                connection = get_connection()
-                with connection.cursor() as cursor:
-                  cursor.execute(
-                      "UPDATE usuarios SET estatus = %s WHERE id = %s",
-                      (val_db, row["id"]),
-                  )
-                  connection.commit()
-                connection.close()
-                st.toast(f"Acceso actualizado para {row['usuario']}")
-                st.rerun()
-              except Exception as err:
-                st.error(f"Error al actualizar estado: {err}")
 
           with cols[4]:
             if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
@@ -161,10 +140,9 @@ with tab_crear:
 
           connection = get_connection()
           with connection.cursor() as cursor:
-            # Por defecto, el usuario se crea con estatus = 1 (Activo)
             query = """
-                            INSERT INTO usuarios (id, usuario, password, tipo_usuario, departamento, estatus) 
-                            VALUES (%s, %s, %s, %s, %s, 1)
+                            INSERT INTO usuarios (id, usuario, password, tipo_usuario, departamento) 
+                            VALUES (%s, %s, %s, %s, %s)
                         """
             cursor.execute(
                 query,
