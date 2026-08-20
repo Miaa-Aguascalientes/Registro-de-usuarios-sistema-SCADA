@@ -13,6 +13,11 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+# LOGOTIPO
+col_logo, col_vacia = st.columns([1, 10])
+with col_logo:
+    st.image("https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg", width=150)
+
 # -------------------------------------------------------------------------
 # 0. SECCIÓN ---------------------------------------- SISTEMA DE AUTENTICACIÓN HUD DEFINITIVO --------------------------------------------------------------------
 if "autenticado" not in st.session_state:
