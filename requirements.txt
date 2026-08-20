@@ -3,3 +3,4 @@ pandas
 pymysql
 sqlalchemy
 mysql-connector-python
+cryptography
