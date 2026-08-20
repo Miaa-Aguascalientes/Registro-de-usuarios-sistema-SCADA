@@ -30,8 +30,7 @@ if "fase_carga" not in st.session_state:
 @st.cache_resource
 def get_mysql_telemetria_engine():
   try:
-    # Utilizamos la URL completa que ya tienes en tu archivo secrets
-    # st.secrets["databases"]["url_dic"] es la ruta correcta según tu archivo
+    # Usamos directamente la URL definida en tu sección [databases] de secrets
     engine = create_engine(
         st.secrets["databases"]["url_dic"],
         pool_recycle=3600,
@@ -39,19 +38,24 @@ def get_mysql_telemetria_engine():
     )
     return engine
   except Exception as e:
-    st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN: {e}")
+    st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN TELEMETRÍA: {e}")
     return None
 
 
 def get_connection():
-  """Función auxiliar para pymysql usando los secretos de telemetría"""
+  """Función auxiliar para pymysql parseando la URL de tus secretos"""
   try:
-    c = st.secrets["mysql_telemetria"]
+    url = st.secrets["databases"]["url_dic"]
+    clean_url = url.replace("mysql+pymysql://", "")
+    auth, rest = clean_url.split("@")
+    user, password = auth.split(":")
+    host, database = rest.split("/")
+
     return pymysql.connect(
-        host=c["host"],
-        user=c["user"],
-        password=c["password"],
-        database=c["database"],
+        host=host,
+        user=user,
+        password=password,
+        database=database,
         port=3306,
         cursorclass=pymysql.cursors.DictCursor,
     )
