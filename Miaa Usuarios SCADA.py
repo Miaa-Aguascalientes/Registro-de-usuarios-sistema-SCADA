@@ -417,10 +417,9 @@ with tab_editar:
           edit_usuario = st.text_input(
               "Nombre de Usuario", value=user_data["usuario"]
           )
+          # AQUÍ SE MUESTRA LA CONTRASEÑA ACTUAL
           edit_password = st.text_input(
-              "Nueva Contraseña (dejar en blanco para mantener la actual)",
-              type="password",
-              value="",
+              "Contraseña", type="default", value=user_data["password"]
           )
 
         with col_e2:
@@ -441,10 +440,6 @@ with tab_editar:
 
         if actualizar_btn:
           try:
-            pwd_a_guardar = (
-                edit_password if edit_password != "" else user_data["password"]
-            )
-
             connection = get_connection()
             if connection:
               with connection.cursor() as cursor:
@@ -457,7 +452,7 @@ with tab_editar:
                     query_update,
                     (
                         edit_usuario,
-                        pwd_a_guardar,
+                        edit_password,
                         edit_tipo,
                         edit_departamento,
                         user_data["id"],
