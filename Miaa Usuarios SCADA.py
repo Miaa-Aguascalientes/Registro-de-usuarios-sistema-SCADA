@@ -30,16 +30,16 @@ if "fase_carga" not in st.session_state:
 @st.cache_resource
 def get_mysql_telemetria_engine():
   try:
-    c = st.secrets["mysql_telemetria"]
-    pwd = urllib.parse.quote_plus(c["password"])
+    # Utilizamos la URL completa que ya tienes en tu archivo secrets
+    # st.secrets["databases"]["url_dic"] es la ruta correcta según tu archivo
     engine = create_engine(
-        f"mysql+mysqlconnector://{c['user']}:{pwd}@{c['host']}/{c['database']}",
+        st.secrets["databases"]["url_dic"],
         pool_recycle=3600,
         pool_pre_ping=True,
     )
     return engine
   except Exception as e:
-    st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN TELEMETRÍA: {e}")
+    st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN: {e}")
     return None
 
 
