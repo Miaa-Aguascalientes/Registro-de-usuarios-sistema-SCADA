@@ -13,19 +13,16 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# --- LOGOTIPO Y TÍTULO AJUSTADO ---
-col_logo, col_titulo = st.columns([1.2, 8.8])
-
-with col_logo:
-    st.image("https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg", width=100)
-
-with col_titulo:
-    # Ajustamos el alto del contenedor y reducimos el tamaño de letra
-    st.markdown("""
-        <div style="height: 100px; display: flex; align-items: center;">
-            <h1 style="margin: 0; color: #00d4ff; font-size: 24px; white-space: nowrap;">Registro de usuarios</h1>
-        </div>
-    """, unsafe_allow_html=True)
+# --- LOGOTIPO Y TÍTULO EN LA MISMA LÍNEA ---
+st.markdown(
+    """
+    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+        <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" style="width: 120px;">
+        <h1 style="margin: 0; color: #00d4ff; font-size: 26px; font-weight: bold;">Registro de usuarios</h1>
+    </div>
+""",
+    unsafe_allow_html=True,
+)
 
 # -------------------------------------------------------------------------
 # 0. SECCIÓN ---------------------------------------- SISTEMA DE AUTENTICACIÓN HUD DEFINITIVO --------------------------------------------------------------------
