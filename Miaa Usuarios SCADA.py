@@ -13,13 +13,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# --- LOGOTIPO Y TÍTULO EN LA MISMA LÍNEA ---
+# --- LOGOTIPO, TÍTULO Y LÍNEA DIVISORIA TURQUESA ---
 st.markdown(
     """
-    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
-        <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" style="width: 120px;">
-        <h1 style="margin: 0; color: #00d4ff; font-size: 26px; font-weight: bold;">Registro de usuarios</h1>
+    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+        <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" style="width: 100px;">
+        <h1 style="margin: 0; color: #FFFFFF; font-size: 20px; font-weight: bold;">Registro de usuarios</h1>
     </div>
+    <hr style="border: none; height: 2px; background-color: #00d4ff; margin-top: 5px; margin-bottom: 20px;">
 """,
     unsafe_allow_html=True,
 )
