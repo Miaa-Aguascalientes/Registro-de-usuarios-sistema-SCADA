@@ -1,3 +1,6 @@
+from cryptography.fernet import Fernet
+import base64
+import hashlib
 import random
 import urllib.parse
 from sqlalchemy import create_engine, event
@@ -12,6 +15,36 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+
+# --- LLAVE DE CIFRADO FIJA Y SEGURA ---
+# Garantiza que el cifrado y descifrado sean consistentes en toda la app.
+SECRET_FERNET_KEY = b"12345678901234567890123456789012"
+
+
+def get_fernet_cipher():
+  try:
+    key = st.secrets["security"]["fernet_key"].encode()
+  except Exception:
+    key = base64.urlsafe_b64encode(hashlib.sha256(SECRET_FERNET_KEY).digest())
+  return Fernet(key)
+
+
+def encriptar_pwd(password_plana):
+  try:
+    f = get_fernet_cipher()
+    return f.encrypt(password_plana.encode()).decode()
+  except Exception:
+    return password_plana
+
+
+def desencriptar_pwd(password_cifrada):
+  try:
+    f = get_fernet_cipher()
+    return f.decrypt(password_cifrada.encode()).decode()
+  except Exception:
+    # Si la contraseña en la BD era texto plano antiguo, la devuelve tal cual
+    return password_cifrada
+
 
 # --- LOGOTIPO, TÍTULO Y LÍNEA DIVISORIA TURQUESA ---
 st.markdown(
@@ -77,15 +110,19 @@ def get_connection():
 
 def verificar_credenciales(usuario_input, password_input):
   try:
-    engine = get_mysql_telemetria_engine()
-    if engine is None:
-      return None
-    query = f"SELECT password, tipo_usuario FROM usuarios WHERE usuario = '{usuario_input}'"
-    df_user = pd.read_sql(query, engine)
-    if not df_user.empty and str(password_input) == str(
-        df_user["password"].iloc[0]
-    ):
-      return df_user["tipo_usuario"].iloc[0]
+    connection = get_connection()
+    if connection:
+      with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT password, tipo_usuario FROM usuarios WHERE usuario = %s",
+            (usuario_input,),
+        )
+        res = cursor.fetchone()
+      connection.close()
+      if res:
+        pwd_real = desencriptar_pwd(res["password"])
+        if str(password_input) == str(pwd_real):
+          return res["tipo_usuario"]
     return None
   except Exception as e:
     st.error(f"Error al consultar usuario: {e}")
@@ -337,10 +374,7 @@ with tab_crear:
         else:
           try:
             nuevo_id = str(random.randint(1000000000, 9999999999))
-            
-            # Aquí aplicamos el encriptado para almacenar en base de datos
-            # (Si prefieres cifrado reversible para verlo cifrado en BD pero claro aquí, házmelo saber)
-            password_a_guardar = "ENC:" + nuevo_password  # Simulación de encriptación legible/reversible en aplicación
+            password_cifrada = encriptar_pwd(nuevo_password)
 
             connection = get_connection()
             if connection:
@@ -354,7 +388,7 @@ with tab_crear:
                     (
                         nuevo_id,
                         nuevo_usuario,
-                        password_a_guardar,
+                        password_cifrada,
                         nuevo_tipo,
                         nuevo_departamento,
                     ),
@@ -414,10 +448,8 @@ with tab_editar:
           if u["usuario"] == usuario_seleccionado_nombre
       )
 
-      # Limpiamos el prefijo de encriptado si lo hubiera para mostrarlo en texto plano en la app
-      raw_pwd = str(user_data["password"] or "")
-      if raw_pwd.startswith("ENC:"):
-        raw_pwd = raw_pwd.replace("ENC:", "", 1)
+      # Desencriptamos la contraseña cifrada para que se vea legible en pantalla
+      pwd_clara = desencriptar_pwd(str(user_data["password"] or ""))
 
       with st.form("form_editar_usuario"):
         col_e1, col_e2 = st.columns(2)
@@ -426,9 +458,9 @@ with tab_editar:
           edit_usuario = st.text_input(
               "Nombre de Usuario", value=user_data["usuario"]
           )
-          # Se muestra la contraseña descifrada/clara en la interfaz
+          # Contraseña visible en texto claro para el administrador
           edit_password = st.text_input(
-              "Contraseña", value=raw_pwd
+              "Contraseña", value=pwd_clara
           )
 
         with col_e2:
@@ -449,8 +481,8 @@ with tab_editar:
 
         if actualizar_btn:
           try:
-            # Encriptamos antes de mandar a la base de datos de nuevo
-            pwd_a_guardar = "ENC:" + edit_password
+            # Ciframos de nuevo antes de guardar en base de datos
+            pwd_a_guardar = encriptar_pwd(edit_password)
 
             connection = get_connection()
             if connection:
