@@ -1,9 +1,9 @@
 import random
+import urllib.parse
+from sqlalchemy import create_engine, event
 import pandas as pd
 import pymysql
 import streamlit as st
-import urllib.parse
-from sqlalchemy import create_engine, event
 
 # Configuración inicial de la página con los parámetros solicitados
 st.set_page_config(
