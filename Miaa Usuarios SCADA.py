@@ -42,7 +42,6 @@ if "fase_carga" not in st.session_state:
 @st.cache_resource
 def get_mysql_telemetria_engine():
   try:
-    # Usamos directamente la URL definida en tu sección [databases] de secrets
     engine = create_engine(
         st.secrets["databases"]["url_dic"],
         pool_recycle=3600,
@@ -200,11 +199,6 @@ if not st.session_state.autenticado:
 # -------------------------------------------------------------------------
 # APLICACIÓN PRINCIPAL (POST-AUTENTICACIÓN)
 # -------------------------------------------------------------------------
-st.title("👥 Gestión de Usuarios del Sistema")
-st.markdown(
-    "Administra las credenciales, tipos de usuario y departamentos de la base"
-    " de datos `miaamx_telemetria2` (tabla `usuarios`)."
-)
 
 # Validar si el rol actual es Administrador
 es_admin = (
