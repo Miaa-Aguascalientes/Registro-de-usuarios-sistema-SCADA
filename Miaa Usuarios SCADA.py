@@ -2,52 +2,197 @@ import random
 import pandas as pd
 import pymysql
 import streamlit as st
+import urllib.parse
+from sqlalchemy import create_engine, event
+
+# Configuración inicial de la página con los parámetros solicitados
+st.set_page_config(
+    page_title="Sistema registros",
+    page_icon="https://www.miaa.mx/favicon.ico",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+# -------------------------------------------------------------------------
+# 0. SECCIÓN ---------------------------------------- SISTEMA DE AUTENTICACIÓN HUD DEFINITIVO --------------------------------------------------------------------
+if "autenticado" not in st.session_state:
+  query_params = st.query_params
+  if query_params.get("access") == "granted":
+    st.session_state.autenticado = True
+    st.session_state.rol = query_params.get("role", "usuario")
+  else:
+    st.session_state.autenticado = False
+
+if "fase_carga" not in st.session_state:
+  st.session_state.fase_carga = False
 
 
-# Función para extraer los parámetros de la URL en los secretos y conectar con pymysql
-def get_connection():
-  secrets = st.secrets
-
-  if "databases" not in secrets or "url_dic" not in secrets["databases"]:
-    st.error(
-        "🚨 Error crítico: No se encontró la sección [databases] o la llave"
-        " 'url_dic' en los secretos de Streamlit."
+@st.cache_resource
+def get_mysql_telemetria_engine():
+  try:
+    c = st.secrets["mysql_telemetria"]
+    pwd = urllib.parse.quote_plus(c["password"])
+    engine = create_engine(
+        f"mysql+mysqlconnector://{c['user']}:{pwd}@{c['host']}/{c['database']}",
+        pool_recycle=3600,
+        pool_pre_ping=True,
     )
-    st.stop()
-
-  url = secrets["databases"]["url_dic"]
-
-  clean_url = url.replace("mysql+pymysql://", "")
-  auth, rest = clean_url.split("@")
-  user, password = auth.split(":")
-  host, database = rest.split("/")
-
-  return pymysql.connect(
-      host=host,
-      user=user,
-      password=password,
-      database=database,
-      port=3306,
-      cursorclass=pymysql.cursors.DictCursor,
-  )
+    return engine
+  except Exception as e:
+    st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN TELEMETRÍA: {e}")
+    return None
 
 
+def get_connection():
+  """Función auxiliar para pymysql usando los secretos de telemetría"""
+  try:
+    c = st.secrets["mysql_telemetria"]
+    return pymysql.connect(
+        host=c["host"],
+        user=c["user"],
+        password=c["password"],
+        database=c["database"],
+        port=3306,
+        cursorclass=pymysql.cursors.DictCursor,
+    )
+  except Exception as e:
+    st.error(f"Error al conectar con la base de datos: {e}")
+    return None
+
+
+def verificar_credenciales(usuario_input, password_input):
+  try:
+    engine = get_mysql_telemetria_engine()
+    if engine is None:
+      return None
+    query = f"SELECT password, tipo_usuario FROM usuarios WHERE usuario = '{usuario_input}'"
+    df_user = pd.read_sql(query, engine)
+    if not df_user.empty and str(password_input) == str(
+        df_user["password"].iloc[0]
+    ):
+      return df_user["tipo_usuario"].iloc[0]
+    return None
+  except Exception as e:
+    st.error(f"Error al consultar usuario: {e}")
+    return None
+
+
+# 1. SECCIÓN -------------------------------------------------------ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ----------------------------------------------------------------------------------
+st.markdown(
+    """
+<style>
+    /* Configuración base */
+    .stApp { background-color: #050a10 !important; }
+    .block-container { padding: 10px !important; max-width: 100% !important; }
+    header, footer { visibility: hidden !important; }
+    
+    /* EFECTOS Y ANIMACIONES */
+    .visual-core { position: relative; width: 280px; height: 280px; margin: auto; }
+    .ring { position: absolute; border-radius: 50%; border: 4px solid transparent; animation: spin var(--d) linear infinite; }
+    .r1 { width: 100%; height: 100%; border-top: 6px solid #00d4ff; border-bottom: 6px solid #00d4ff; --d: 4s; }
+    .r2 { width: 78%; height: 78%; top: 11%; left: 11%; border: 2px dashed #00d4ff; --d: 8s; animation-direction: reverse; }
+    .center-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+    .logo-miaa { width: 130px; filter: drop-shadow(0 0 10px #00d4ff); }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    /* ESTILO UNIFICADO DE INPUTS */
+    div[data-testid="stTextInputRootElement"] {
+        background-color: #0d1b2a !important;
+        border: 1px solid #1f4068 !important;
+        border-radius: 0px !important;
+        box-shadow: none !important;
+        height: 40px !important;
+    }
+    div[data-testid="stTextInputRootElement"] div[data-baseweb="base-input"] {
+        background-color: transparent !important;
+    }
+    .stTextInput input {
+        background-color: transparent !important;
+        color: #00d4ff !important;
+        font-size: 15px !important;
+    }
+    div[data-testid="stTextInputRootElement"]:focus-within {
+        border: 1px solid #00d4ff !important;
+    }
+
+    .stButton button { 
+        background: #00d4ff !important; color: #050a10 !important; font-weight: bold !important; 
+        width: 100%; height: 45px; border: none !important; 
+    }
+    .login-box { 
+        background: rgba(0, 212, 255, 0.05); border-left: 6px solid #00d4ff; 
+        padding: 20px; margin-top: 20px; width: 100%; 
+    }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# -------------------------------------------------------------------------
+# PANTALLA DE LOGIN SI NO ESTÁ AUTENTICADO
+# -------------------------------------------------------------------------
+if not st.session_state.autenticado:
+  col_vis, col_log = st.columns([1, 1])
+  with col_vis:
+    st.markdown('<div style="height: 5vh;"></div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="visual-core">
+            <div class="ring r1"></div><div class="ring r2"></div>
+            <div class="center-logo">
+                <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" class="logo-miaa">
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+  with col_log:
+    if not st.session_state.fase_carga:
+      st.markdown('<div class="login-box">', unsafe_allow_html=True)
+      st.markdown(
+          '<h2 style="color:#00d4ff; font-size:16px;">// CREDENCIALES'
+          " SCADA</h2>",
+          unsafe_allow_html=True,
+      )
+      with st.form("login_form"):
+        u = st.text_input("USUARIO")
+        p = st.text_input("PASSWORD", type="password")
+        if st.form_submit_button("ACCEDER"):
+          rol = verificar_credenciales(u, p)
+          if rol:
+            st.session_state.temp_rol = rol
+            st.session_state.fase_carga = True
+            st.rerun()
+          else:
+            st.error("❌ ACCESO DENEGADO")
+      st.markdown("</div>", unsafe_allow_html=True)
+    else:
+      st.markdown('<div class="login-box">', unsafe_allow_html=True)
+      st.markdown(
+          '<h2 style="color:#00d4ff; font-size:16px;">// CONFIGURANDO ENTORNO'
+          " MÓVIL...</h2>",
+          unsafe_allow_html=True,
+      )
+      st.session_state.autenticado = True
+      st.session_state.rol = st.session_state.temp_rol
+      st.session_state.fase_carga = False
+      st.rerun()
+      st.markdown("</div>", unsafe_allow_html=True)
+  st.stop()
+
+# -------------------------------------------------------------------------
+# APLICACIÓN PRINCIPAL (POST-AUTENTICACIÓN)
+# -------------------------------------------------------------------------
 st.title("👥 Gestión de Usuarios del Sistema")
 st.markdown(
     "Administra las credenciales, tipos de usuario y departamentos de la base"
     " de datos `miaamx_telemetria2` (tabla `usuarios`)."
 )
 
-# Simulamos o leemos el rol del usuario actual desde st.session_state
-# (Asegúrate de asignar st.session_state["tipo_usuario"] cuando el usuario inicie sesión en tu app principal)
-if "tipo_usuario" not in st.session_state:
-  st.session_state["tipo_usuario"] = (
-      "Administrador"  # Valor por defecto para pruebas
-  )
-
+# Validar si el rol actual es Administrador
 es_admin = (
-    str(st.session_state.get("tipo_usuario", "")).strip().lower()
-    == "administrador"
+    str(st.session_state.get("rol", "")).strip().lower() == "administrador"
 )
 
 # Pestañas principales
@@ -71,69 +216,69 @@ with tab_lista:
 
   try:
     connection = get_connection()
-    with connection.cursor() as cursor:
-      cursor.execute(
-          "SELECT id, usuario, tipo_usuario, departamento FROM usuarios"
-      )
-      resultado = cursor.fetchall()
-    connection.close()
-
-    if resultado:
-      df_usuarios = pd.DataFrame(resultado)
-
-      if busqueda:
-        query_filtro = (
-            df_usuarios["usuario"].str.contains(busqueda, case=False, na=False)
-            | df_usuarios["departamento"].str.contains(
-                busqueda, case=False, na=False
-            )
-            | df_usuarios["tipo_usuario"].str.contains(
-                busqueda, case=False, na=False
-            )
+    if connection:
+      with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT id, usuario, tipo_usuario, departamento FROM usuarios"
         )
-        df_usuarios = df_usuarios[query_filtro]
+        resultado = cursor.fetchall()
+      connection.close()
 
-      if not df_usuarios.empty:
-        for _, row in df_usuarios.iterrows():
-          with st.container():
-            # Si es admin mostramos 4 columnas (incluye botón eliminar), si no, 3 columnas
-            if es_admin:
-              cols = st.columns([3, 2, 2, 1])
-            else:
-              cols = st.columns([3, 2, 2])
+      if resultado:
+        df_usuarios = pd.DataFrame(resultado)
 
-            with cols[0]:
-              st.markdown(f"👤 **{row['usuario']}**")
+        if busqueda:
+          query_filtro = (
+              df_usuarios["usuario"].str.contains(busqueda, case=False, na=False)
+              | df_usuarios["departamento"].str.contains(
+                  busqueda, case=False, na=False
+              )
+              | df_usuarios["tipo_usuario"].str.contains(
+                  busqueda, case=False, na=False
+              )
+          )
+          df_usuarios = df_usuarios[query_filtro]
 
-            with cols[1]:
-              st.markdown(f"🏢 {row['departamento']}")
+        if not df_usuarios.empty:
+          for _, row in df_usuarios.iterrows():
+            with st.container():
+              if es_admin:
+                cols = st.columns([3, 2, 2, 1])
+              else:
+                cols = st.columns([3, 2, 2])
 
-            with cols[2]:
-              st.markdown(f"📌 *{row['tipo_usuario']}*")
+              with cols[0]:
+                st.markdown(f"👤 **{row['usuario']}**")
 
-            if es_admin:
-              with cols[3]:
-                if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
-                  try:
-                    connection = get_connection()
-                    with connection.cursor() as cursor:
-                      cursor.execute(
-                          "DELETE FROM usuarios WHERE id = %s", (row["id"],)
-                      )
-                      connection.commit()
-                    connection.close()
-                    st.success(f"Usuario {row['usuario']} eliminado.")
-                    st.rerun()
-                  except Exception as err:
-                    st.error(f"Error al eliminar: {err}")
+              with cols[1]:
+                st.markdown(f"🏢 {row['departamento']}")
 
-            st.markdown("---")
+              with cols[2]:
+                st.markdown(f"📌 *{row['tipo_usuario']}*")
+
+              if es_admin:
+                with cols[3]:
+                  if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
+                    try:
+                      connection = get_connection()
+                      with connection.cursor() as cursor:
+                        cursor.execute(
+                            "DELETE FROM usuarios WHERE id = %s", (row["id"],)
+                        )
+                        connection.commit()
+                      connection.close()
+                      st.success(f"Usuario {row['usuario']} eliminado.")
+                      st.rerun()
+                    except Exception as err:
+                      st.error(f"Error al eliminar: {err}")
+
+              st.markdown("---")
+        else:
+          st.warning(
+              "No se encontraron usuarios que coincidan con la búsqueda."
+          )
       else:
-        st.warning(
-            "No se encontraron usuarios que coincidan con la búsqueda."
-        )
-    else:
-      st.info("No hay usuarios registrados en la base de datos.")
+        st.info("No hay usuarios registrados en la base de datos.")
   except Exception as e:
     st.error(f"Error al conectar con la base de datos: {e}")
 
@@ -184,33 +329,34 @@ with tab_crear:
             nuevo_id = str(random.randint(1000000000, 9999999999))
 
             connection = get_connection()
-            with connection.cursor() as cursor:
-              query = """
-                                INSERT INTO usuarios (id, usuario, password, tipo_usuario, departamento) 
-                                VALUES (%s, %s, %s, %s, %s)
-                            """
-              cursor.execute(
-                  query,
-                  (
-                      nuevo_id,
-                      nuevo_usuario,
-                      nuevo_password,
-                      nuevo_tipo,
-                      nuevo_departamento,
-                  ),
-              )
-              connection.commit()
-            connection.close()
+            if connection:
+              with connection.cursor() as cursor:
+                query = """
+                                    INSERT INTO usuarios (id, usuario, password, tipo_usuario, departamento) 
+                                    VALUES (%s, %s, %s, %s, %s)
+                                """
+                cursor.execute(
+                    query,
+                    (
+                        nuevo_id,
+                        nuevo_usuario,
+                        nuevo_password,
+                        nuevo_tipo,
+                        nuevo_departamento,
+                    ),
+                )
+                connection.commit()
+              connection.close()
 
-            st.success(
-                f"¡Usuario **{nuevo_usuario}** registrado exitosamente!"
-            )
-            st.rerun()
+              st.success(
+                  f"¡Usuario **{nuevo_usuario}** registrado exitosamente!"
+              )
+              st.rerun()
           except Exception as e:
             st.error(f"Error al guardar el usuario en la base de datos: {e}")
 
 # -------------------------------------------------------------------------
-# 3. EDITAR USUARIO EXISTENTE (Restringido a Administradores)
+# 3. EDITAR USUARIO EXISTENTE CON AUTOCOMPLETADO (Restringido a Administradores)
 # -------------------------------------------------------------------------
 with tab_editar:
   st.subheader("Modificar Datos de Usuario")
@@ -223,13 +369,16 @@ with tab_editar:
   else:
     try:
       connection = get_connection()
-      with connection.cursor() as cursor:
-        cursor.execute(
-            "SELECT id, usuario, password, tipo_usuario, departamento FROM"
-            " usuarios"
-        )
-        lista_editables = cursor.fetchall()
-      connection.close()
+      if connection:
+        with connection.cursor() as cursor:
+          cursor.execute(
+              "SELECT id, usuario, password, tipo_usuario, departamento FROM"
+              " usuarios"
+          )
+          lista_editables = cursor.fetchall()
+        connection.close()
+      else:
+        lista_editables = []
     except Exception as e:
       lista_editables = []
       st.error(f"Error al cargar usuarios para edición: {e}")
@@ -287,29 +436,30 @@ with tab_editar:
             )
 
             connection = get_connection()
-            with connection.cursor() as cursor:
-              query_update = """
-                                    UPDATE usuarios 
-                                    SET usuario = %s, password = %s, tipo_usuario = %s, departamento = %s 
-                                    WHERE id = %s
-                                """
-              cursor.execute(
-                  query_update,
-                  (
-                      edit_usuario,
-                      pwd_a_guardar,
-                      edit_tipo,
-                      edit_departamento,
-                      user_data["id"],
-                  ),
-              )
-              connection.commit()
-            connection.close()
+            if connection:
+              with connection.cursor() as cursor:
+                query_update = """
+                                        UPDATE usuarios 
+                                        SET usuario = %s, password = %s, tipo_usuario = %s, departamento = %s 
+                                        WHERE id = %s
+                                    """
+                cursor.execute(
+                    query_update,
+                    (
+                        edit_usuario,
+                        pwd_a_guardar,
+                        edit_tipo,
+                        edit_departamento,
+                        user_data["id"],
+                    ),
+                )
+                connection.commit()
+              connection.close()
 
-            st.success(
-                f"¡El usuario **{edit_usuario}** ha sido actualizado"
-                " correctamente!"
-            )
-            st.rerun()
+              st.success(
+                  f"¡El usuario **{edit_usuario}** ha sido actualizado"
+                  " correctamente!"
+              )
+              st.rerun()
           except Exception as e:
             st.error(f"Error al actualizar el usuario: {e}")
