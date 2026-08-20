@@ -38,7 +38,19 @@ st.markdown(
     " de datos `miaamx_telemetria2` (tabla `usuarios`)."
 )
 
-# Pestañas principales incluyendo la de edición
+# Simulamos o leemos el rol del usuario actual desde st.session_state
+# (Asegúrate de asignar st.session_state["tipo_usuario"] cuando el usuario inicie sesión en tu app principal)
+if "tipo_usuario" not in st.session_state:
+  st.session_state["tipo_usuario"] = (
+      "Administrador"  # Valor por defecto para pruebas
+  )
+
+es_admin = (
+    str(st.session_state.get("tipo_usuario", "")).strip().lower()
+    == "administrador"
+)
+
+# Pestañas principales
 tab_lista, tab_crear, tab_editar = st.tabs([
     "📋 Lista de Usuarios",
     "➕ Nuevo Usuario",
@@ -84,7 +96,11 @@ with tab_lista:
       if not df_usuarios.empty:
         for _, row in df_usuarios.iterrows():
           with st.container():
-            cols = st.columns([3, 2, 2, 1])
+            # Si es admin mostramos 4 columnas (incluye botón eliminar), si no, 3 columnas
+            if es_admin:
+              cols = st.columns([3, 2, 2, 1])
+            else:
+              cols = st.columns([3, 2, 2])
 
             with cols[0]:
               st.markdown(f"👤 **{row['usuario']}**")
@@ -95,20 +111,21 @@ with tab_lista:
             with cols[2]:
               st.markdown(f"📌 *{row['tipo_usuario']}*")
 
-            with cols[3]:
-              if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
-                try:
-                  connection = get_connection()
-                  with connection.cursor() as cursor:
-                    cursor.execute(
-                        "DELETE FROM usuarios WHERE id = %s", (row["id"],)
-                    )
-                    connection.commit()
-                  connection.close()
-                  st.success(f"Usuario {row['usuario']} eliminado.")
-                  st.rerun()
-                except Exception as err:
-                  st.error(f"Error al eliminar: {err}")
+            if es_admin:
+              with cols[3]:
+                if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
+                  try:
+                    connection = get_connection()
+                    with connection.cursor() as cursor:
+                      cursor.execute(
+                          "DELETE FROM usuarios WHERE id = %s", (row["id"],)
+                      )
+                      connection.commit()
+                    connection.close()
+                    st.success(f"Usuario {row['usuario']} eliminado.")
+                    st.rerun()
+                  except Exception as err:
+                    st.error(f"Error al eliminar: {err}")
 
             st.markdown("---")
       else:
@@ -121,163 +138,178 @@ with tab_lista:
     st.error(f"Error al conectar con la base de datos: {e}")
 
 # -------------------------------------------------------------------------
-# 2. CREAR NUEVO USUARIO
+# 2. CREAR NUEVO USUARIO (Restringido a Administradores)
 # -------------------------------------------------------------------------
 with tab_crear:
   st.subheader("Registrar Nuevo Usuario")
 
-  with st.form("form_nuevo_usuario", clear_on_submit=True):
-    col1, col2 = st.columns(2)
+  if not es_admin:
+    st.error(
+        "⛔ Acceso restringido. Solo los usuarios con rol de **Administrador**"
+        " pueden dar de alta nuevos usuarios."
+    )
+  else:
+    with st.form("form_nuevo_usuario", clear_on_submit=True):
+      col1, col2 = st.columns(2)
 
-    with col1:
-      nuevo_usuario = st.text_input("Nombre de Usuario", key="create_user_name")
-      nuevo_password = st.text_input(
-          "Contraseña", type="password", key="create_user_pwd"
-      )
-
-    with col2:
-      tipo_usuario_opciones = ["Administrador", "Operador", "Consulta"]
-      nuevo_tipo = st.selectbox(
-          "Tipo de Usuario", tipo_usuario_opciones, key="create_user_type"
-      )
-      nuevo_departamento = st.text_input(
-          "Departamento",
-          placeholder="Ej. Telemetría, Operaciones",
-          key="create_user_dept",
-      )
-
-    submitted = st.form_submit_button("Guardar Usuario")
-
-    if submitted:
-      if not nuevo_usuario or not nuevo_password:
-        st.error(
-            "Los campos Nombre de Usuario y Contraseña son obligatorios.",
-            icon="🚨",
+      with col1:
+        nuevo_usuario = st.text_input(
+            "Nombre de Usuario", key="create_user_name"
         )
-      else:
-        try:
-          nuevo_id = str(random.randint(1000000000, 9999999999))
+        nuevo_password = st.text_input(
+            "Contraseña", type="password", key="create_user_pwd"
+        )
 
-          connection = get_connection()
-          with connection.cursor() as cursor:
-            query = """
-                            INSERT INTO usuarios (id, usuario, password, tipo_usuario, departamento) 
-                            VALUES (%s, %s, %s, %s, %s)
-                        """
-            cursor.execute(
-                query,
-                (
-                    nuevo_id,
-                    nuevo_usuario,
-                    nuevo_password,
-                    nuevo_tipo,
-                    nuevo_departamento,
-                ),
-            )
-            connection.commit()
-          connection.close()
+      with col2:
+        tipo_usuario_opciones = ["Administrador", "Operador", "Consulta"]
+        nuevo_tipo = st.selectbox(
+            "Tipo de Usuario", tipo_usuario_opciones, key="create_user_type"
+        )
+        nuevo_departamento = st.text_input(
+            "Departamento",
+            placeholder="Ej. Telemetría, Operaciones",
+            key="create_user_dept",
+        )
 
-          st.success(
-              f"¡Usuario **{nuevo_usuario}** registrado exitosamente!"
+      submitted = st.form_submit_button("Guardar Usuario")
+
+      if submitted:
+        if not nuevo_usuario or not nuevo_password:
+          st.error(
+              "Los campos Nombre de Usuario y Contraseña son obligatorios.",
+              icon="🚨",
           )
-          st.rerun()
-        except Exception as e:
-          st.error(f"Error al guardar el usuario en la base de datos: {e}")
+        else:
+          try:
+            nuevo_id = str(random.randint(1000000000, 9999999999))
+
+            connection = get_connection()
+            with connection.cursor() as cursor:
+              query = """
+                                INSERT INTO usuarios (id, usuario, password, tipo_usuario, departamento) 
+                                VALUES (%s, %s, %s, %s, %s)
+                            """
+              cursor.execute(
+                  query,
+                  (
+                      nuevo_id,
+                      nuevo_usuario,
+                      nuevo_password,
+                      nuevo_tipo,
+                      nuevo_departamento,
+                  ),
+              )
+              connection.commit()
+            connection.close()
+
+            st.success(
+                f"¡Usuario **{nuevo_usuario}** registrado exitosamente!"
+            )
+            st.rerun()
+          except Exception as e:
+            st.error(f"Error al guardar el usuario en la base de datos: {e}")
 
 # -------------------------------------------------------------------------
-# 3. EDITAR USUARIO EXISTENTE CON AUTOCOMPLETADO INTEGRADO
+# 3. EDITAR USUARIO EXISTENTE (Restringido a Administradores)
 # -------------------------------------------------------------------------
 with tab_editar:
   st.subheader("Modificar Datos de Usuario")
 
-  try:
-    connection = get_connection()
-    with connection.cursor() as cursor:
-      cursor.execute(
-          "SELECT id, usuario, password, tipo_usuario, departamento FROM usuarios"
-      )
-      lista_editables = cursor.fetchall()
-    connection.close()
-  except Exception as e:
-    lista_editables = []
-    st.error(f"Error al cargar usuarios para edición: {e}")
-
-  if not lista_editables:
-    st.warning("No hay usuarios disponibles para editar.")
+  if not es_admin:
+    st.error(
+        "⛔ Acceso restringido. Solo los usuarios con rol de **Administrador**"
+        " pueden editar usuarios."
+    )
   else:
-    nombres_usuarios = [u["usuario"] for u in lista_editables]
-
-    # Este componente permite escribir directamente y despliega las coincidencias automáticamente
-    usuario_seleccionado_nombre = st.selectbox(
-        "Selecciona o escribe el nombre del usuario",
-        nombres_usuarios,
-        key="select_user_to_edit_auto",
-    )
-
-    # Buscar los datos del usuario seleccionado
-    user_data = next(
-        u for u in lista_editables if u["usuario"] == usuario_seleccionado_nombre
-    )
-
-    with st.form("form_editar_usuario"):
-      col_e1, col_e2 = st.columns(2)
-
-      with col_e1:
-        edit_usuario = st.text_input(
-            "Nombre de Usuario", value=user_data["usuario"]
+    try:
+      connection = get_connection()
+      with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT id, usuario, password, tipo_usuario, departamento FROM"
+            " usuarios"
         )
-        edit_password = st.text_input(
-            "Nueva Contraseña (dejar en blanco para mantener la actual)",
-            type="password",
-            value="",
-        )
+        lista_editables = cursor.fetchall()
+      connection.close()
+    except Exception as e:
+      lista_editables = []
+      st.error(f"Error al cargar usuarios para edición: {e}")
 
-      with col_e2:
-        tipo_usuario_opciones = ["Administrador", "Operador", "Consulta"]
-        try:
-          index_tipo = tipo_usuario_opciones.index(user_data["tipo_usuario"])
-        except ValueError:
-          index_tipo = 0
+    if not lista_editables:
+      st.warning("No hay usuarios disponibles para editar.")
+    else:
+      nombres_usuarios = [u["usuario"] for u in lista_editables]
 
-        edit_tipo = st.selectbox(
-            "Tipo de Usuario", tipo_usuario_opciones, index=index_tipo
-        )
-        edit_departamento = st.text_input(
-            "Departamento", value=str(user_data["departamento"] or "")
-        )
+      usuario_seleccionado_nombre = st.selectbox(
+          "Selecciona o escribe el nombre del usuario",
+          nombres_usuarios,
+          key="select_user_to_edit_auto",
+      )
 
-      actualizar_btn = st.form_submit_button("Guardar Cambios")
+      user_data = next(
+          u
+          for u in lista_editables
+          if u["usuario"] == usuario_seleccionado_nombre
+      )
 
-      if actualizar_btn:
-        try:
-          pwd_a_guardar = (
-              edit_password if edit_password != "" else user_data["password"]
+      with st.form("form_editar_usuario"):
+        col_e1, col_e2 = st.columns(2)
+
+        with col_e1:
+          edit_usuario = st.text_input(
+              "Nombre de Usuario", value=user_data["usuario"]
+          )
+          edit_password = st.text_input(
+              "Nueva Contraseña (dejar en blanco para mantener la actual)",
+              type="password",
+              value="",
           )
 
-          connection = get_connection()
-          with connection.cursor() as cursor:
-            query_update = """
-                                UPDATE usuarios 
-                                SET usuario = %s, password = %s, tipo_usuario = %s, departamento = %s 
-                                WHERE id = %s
-                            """
-            cursor.execute(
-                query_update,
-                (
-                    edit_usuario,
-                    pwd_a_guardar,
-                    edit_tipo,
-                    edit_departamento,
-                    user_data["id"],
-                ),
+        with col_e2:
+          tipo_usuario_opciones = ["Administrador", "Operador", "Consulta"]
+          try:
+            index_tipo = tipo_usuario_opciones.index(user_data["tipo_usuario"])
+          except ValueError:
+            index_tipo = 0
+
+          edit_tipo = st.selectbox(
+              "Tipo de Usuario", tipo_usuario_opciones, index=index_tipo
+          )
+          edit_departamento = st.text_input(
+              "Departamento", value=str(user_data["departamento"] or "")
+          )
+
+        actualizar_btn = st.form_submit_button("Guardar Cambios")
+
+        if actualizar_btn:
+          try:
+            pwd_a_guardar = (
+                edit_password if edit_password != "" else user_data["password"]
             )
-            connection.commit()
-          connection.close()
 
-          st.success(
-              f"¡El usuario **{edit_usuario}** ha sido actualizado"
-              " correctamente!"
-          )
-          st.rerun()
-        except Exception as e:
-          st.error(f"Error al actualizar el usuario: {e}")
+            connection = get_connection()
+            with connection.cursor() as cursor:
+              query_update = """
+                                    UPDATE usuarios 
+                                    SET usuario = %s, password = %s, tipo_usuario = %s, departamento = %s 
+                                    WHERE id = %s
+                                """
+              cursor.execute(
+                  query_update,
+                  (
+                      edit_usuario,
+                      pwd_a_guardar,
+                      edit_tipo,
+                      edit_departamento,
+                      user_data["id"],
+                  ),
+              )
+              connection.commit()
+            connection.close()
+
+            st.success(
+                f"¡El usuario **{edit_usuario}** ha sido actualizado"
+                " correctamente!"
+            )
+            st.rerun()
+          except Exception as e:
+            st.error(f"Error al actualizar el usuario: {e}")
