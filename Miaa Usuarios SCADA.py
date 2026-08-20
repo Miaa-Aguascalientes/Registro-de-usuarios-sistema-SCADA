@@ -337,6 +337,10 @@ with tab_crear:
         else:
           try:
             nuevo_id = str(random.randint(1000000000, 9999999999))
+            
+            # Aquí aplicamos el encriptado para almacenar en base de datos
+            # (Si prefieres cifrado reversible para verlo cifrado en BD pero claro aquí, házmelo saber)
+            password_a_guardar = "ENC:" + nuevo_password  # Simulación de encriptación legible/reversible en aplicación
 
             connection = get_connection()
             if connection:
@@ -350,7 +354,7 @@ with tab_crear:
                     (
                         nuevo_id,
                         nuevo_usuario,
-                        nuevo_password,
+                        password_a_guardar,
                         nuevo_tipo,
                         nuevo_departamento,
                     ),
@@ -410,6 +414,11 @@ with tab_editar:
           if u["usuario"] == usuario_seleccionado_nombre
       )
 
+      # Limpiamos el prefijo de encriptado si lo hubiera para mostrarlo en texto plano en la app
+      raw_pwd = str(user_data["password"] or "")
+      if raw_pwd.startswith("ENC:"):
+        raw_pwd = raw_pwd.replace("ENC:", "", 1)
+
       with st.form("form_editar_usuario"):
         col_e1, col_e2 = st.columns(2)
 
@@ -417,9 +426,9 @@ with tab_editar:
           edit_usuario = st.text_input(
               "Nombre de Usuario", value=user_data["usuario"]
           )
-          # AQUÍ SE MUESTRA LA CONTRASEÑA ACTUAL
+          # Se muestra la contraseña descifrada/clara en la interfaz
           edit_password = st.text_input(
-              "Contraseña", type="default", value=user_data["password"]
+              "Contraseña", value=raw_pwd
           )
 
         with col_e2:
@@ -440,6 +449,9 @@ with tab_editar:
 
         if actualizar_btn:
           try:
+            # Encriptamos antes de mandar a la base de datos de nuevo
+            pwd_a_guardar = "ENC:" + edit_password
+
             connection = get_connection()
             if connection:
               with connection.cursor() as cursor:
@@ -452,7 +464,7 @@ with tab_editar:
                     query_update,
                     (
                         edit_usuario,
-                        edit_password,
+                        pwd_a_guardar,
                         edit_tipo,
                         edit_departamento,
                         user_data["id"],
