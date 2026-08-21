@@ -44,14 +44,16 @@ def desencriptar_pwd(password_cifrada):
     return password_cifrada
 
 
-# --- LOGOTIPO, TÍTULO Y LÍNEA DIVISORIA TURQUESA ---
+# --- HEADER VISUAL ESTILO TÉCNICO MIAA ---
 st.markdown(
     """
-    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
-        <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" style="width: 80px;">
-        <h1 style="margin: 0; color: #FFFFFF; font-size: 18px; font-weight: bold;">Registro de usuarios</h1>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 10px; margin-bottom: 5px;">
+        <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" style="width: 110px; filter: drop-shadow(0 0 10px rgba(0,212,255,0.4));">
     </div>
-    <hr style="border: none; height: 2px; background-color: #00d4ff; margin-top: 5px; margin-bottom: 20px;">
+    <div style="text-align: center; color: #8a99ad; font-size: 11px; letter-spacing: 1px; margin-bottom: 15px;">
+        MODELO INTEGRAL DE AGUAS DE AGUASCALIENTES
+    </div>
+    <hr style="border: none; height: 2px; background: linear-gradient(90deg, transparent, #00d4ff, transparent); margin-bottom: 25px;">
 """,
     unsafe_allow_html=True,
 )
@@ -69,20 +71,6 @@ if "autenticado" not in st.session_state:
 
 if "fase_carga" not in st.session_state:
   st.session_state.fase_carga = False
-
-
-@st.cache_resource
-def get_mysql_telemetria_engine():
-  try:
-    engine = create_engine(
-        st.secrets["databases"]["url_dic"],
-        pool_recycle=3600,
-        pool_pre_ping=True,
-    )
-    return engine
-  except Exception as e:
-    st.error(f"⚠️ ERROR CRÍTICO DE CONEXIÓN TELEMETRÍA: {e}")
-    return None
 
 
 def get_connection():
@@ -133,75 +121,76 @@ def verificar_credenciales(usuario_input, password_input):
 
 
 # -------------------------------------------------------------------------
-# ESTILO VISUAL HUD (BOTONES CORREGIDOS CON TEXTO VISIBLE)
+# ESTILO VISUAL GLOBAL (TARJETAS HUD, BOTONES Y CONTENEDORES)
 # -------------------------------------------------------------------------
 st.markdown(
     """
 <style>
     .stApp { background-color: #050a10 !important; }
-    .block-container { padding: 8px !important; max-width: 100% !important; }
+    .block-container { padding: 12px !important; max-width: 600px !important; }
     header, footer { visibility: hidden !important; }
     
-    /* EFECTOS Y ANIMACIONES */
-    .visual-core { position: relative; width: 180px; height: 180px; margin: 0 auto 20px auto; }
-    .ring { position: absolute; border-radius: 50%; border: 3px solid transparent; animation: spin var(--d) linear infinite; }
-    .r1 { width: 100%; height: 100%; border-top: 4px solid #00d4ff; border-bottom: 4px solid #00d4ff; --d: 4s; }
-    .r2 { width: 78%; height: 78%; top: 11%; left: 11%; border: 2px dashed #00d4ff; --d: 8s; animation-direction: reverse; }
-    .center-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
-    .logo-miaa { width: 80px; filter: drop-shadow(0 0 8px #00d4ff); }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
-
-    /* ESTILO UNIFICADO DE INPUTS */
-    div[data-testid="stTextInputRootElement"] {
-        background-color: #0d1b2a !important;
-        border: 1px solid #1f4068 !important;
-        border-radius: 4px !important;
-        box-shadow: none !important;
+    /* TÍTULOS Y TEXTOS */
+    h1, h2, h3 { color: #FFFFFF !important; font-family: sans-serif; }
+    p, span, label { color: #c0cbd8 !important; }
+    
+    /* INPUTS DE TEXTO Y SELECTBOXES ESTILO HUD */
+    div[data-testid="stTextInputRootElement"], div[data-testid="stSelectbox"] {
+        background-color: #0b1624 !important;
+        border: 1px solid #19324c !important;
+        border-radius: 8px !important;
     }
     .stTextInput input {
         color: #00d4ff !important;
         font-size: 14px !important;
     }
-    
     .stTextInput label, .stSelectbox label {
         color: #FFFFFF !important;
-        font-weight: bold !important;
+        font-weight: 600 !important;
     }
 
-    div[data-testid="stVerticalBlock"] p, 
-    div[data-testid="stVerticalBlock"] span {
-        color: #FFFFFF !important;
+    /* TARJETAS DE CONTENEDOR ESTILO HUD */
+    div.element-container {
+        color: #ffffff;
     }
-    
-    /* ESTILO GENERAL Y FORZADO PARA TODOS LOS BOTONES Y SUS TEXTOS INTERNOS */
+
+    /* ESTILO GENERAL PARA BOTONES Y ACCIONES */
     div[data-testid="stFormSubmitButton"] button, 
-    button[kind="secondary"],
     .stButton button { 
         background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%) !important; 
-        color: #000000 !important; 
+        color: #050a10 !important; 
         font-weight: 800 !important; 
-        font-size: 14px !important;
+        font-size: 13px !important;
+        letter-spacing: 0.5px;
         width: 100% !important; 
         height: 42px; 
         border: none !important; 
-        border-radius: 6px !important;
-        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
+        border-radius: 8px !important;
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.25);
+        transition: all 0.3s ease;
     }
 
-    /* FORZAR QUE CUALQUIER ELEMENTO DE TEXTO DENTRO DE LOS BOTONES SEA NEGRO Y LEGIBLE */
     div[data-testid="stFormSubmitButton"] button *, 
-    button[kind="secondary"] *,
     .stButton button * {
-        color: #000000 !important;
+        color: #050a10 !important;
         font-weight: 800 !important;
     }
 
-    .login-box { 
-        background: rgba(0, 212, 255, 0.05); 
+    div[data-testid="stFormSubmitButton"] button:hover, 
+    .stButton button:hover {
+        opacity: 0.92;
+        box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+    }
+
+    /* CAJA DE LOGIN / CONTENEDOR PRINCIPAL */
+    .hud-card { 
+        background: rgba(11, 22, 36, 0.7); 
+        border: 1px solid #19324c;
         border-left: 4px solid #00d4ff; 
-        padding: 15px; 
-        margin-top: 10px; 
-        width: 100%; 
+        padding: 20px; 
+        border-radius: 10px;
+        margin-bottom: 15px; 
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
 </style>
 """,
@@ -214,26 +203,21 @@ st.markdown(
 if not st.session_state.autenticado:
   st.markdown(
       """
-        <div class="visual-core">
-            <div class="ring r1"></div><div class="ring r2"></div>
-            <div class="center-logo">
-                <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" class="logo-miaa">
-            </div>
+        <div class="hud-card" style="text-align: center; margin-top: 10px;">
+            <h2 style="color:#00d4ff; font-size:18px; margin-bottom: 5px;">¡Bienvenido!</h2>
+            <p style="font-size: 13px; color: #8a99ad;">Ingresa tus credenciales del sistema para continuar</p>
         </div>
         """,
       unsafe_allow_html=True,
   )
 
   if not st.session_state.fase_carga:
-    st.markdown('<div class="login-box">', unsafe_allow_html=True)
-    st.markdown(
-        '<h2 style="color:#00d4ff; font-size:15px;">// CREDENCIALES SCADA</h2>',
-        unsafe_allow_html=True,
-    )
+    st.markdown('<div class="hud-card">', unsafe_allow_html=True)
     with st.form("login_form"):
       u = st.text_input("USUARIO")
       p = st.text_input("PASSWORD", type="password")
 
+      st.markdown("<br>", unsafe_allow_html=True)
       col_l1, col_l2, col_l3 = st.columns([1, 2, 1])
       with col_l2:
         submitted_login = st.form_submit_button("ACCEDER")
@@ -248,10 +232,10 @@ if not st.session_state.autenticado:
           st.error("❌ ACCESO DENEGADO")
     st.markdown("</div>", unsafe_allow_html=True)
   else:
-    st.markdown('<div class="login-box">', unsafe_allow_html=True)
+    st.markdown('<div class="hud-card">', unsafe_allow_html=True)
     st.markdown(
-        '<h2 style="color:#00d4ff; font-size:15px;">// CONFIGURANDO ENTORNO'
-        " MÓVIL...</h2>",
+        '<h3 style="color:#00d4ff; font-size:15px; text-align:center;">//'
+        " CONFIGURANDO ENTORNO SEGURO...</h3>",
         unsafe_allow_html=True,
     )
     st.session_state.autenticado = True
@@ -276,11 +260,10 @@ tab_lista, tab_crear, tab_editar = st.tabs(
 # 1. LISTA DE USUARIOS Y BUSCADOR
 # -------------------------------------------------------------------------
 with tab_lista:
-  st.subheader("Usuarios")
-
+  st.markdown("<br>", unsafe_allow_html=True)
   busqueda = st.text_input(
       "🔍 Buscar usuario",
-      placeholder="Filtro...",
+      placeholder="Filtro por nombre, depto o rol...",
       key="search_list_tab",
   )
 
@@ -311,32 +294,41 @@ with tab_lista:
 
         if not df_usuarios.empty:
           for _, row in df_usuarios.iterrows():
-            with st.container():
+            st.markdown(
+                f"""
+                        <div class="hud-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 15px; font-weight: bold; color: #FFFFFF;">👤 {row['usuario']}</span>
+                                <span style="background: rgba(0,212,255,0.1); color: #00d4ff; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">{row['tipo_usuario']}</span>
+                            </div>
+                            <div style="font-size: 12px; color: #8a99ad; margin-bottom: 12px;">
+                                🏢 Departamento: <span style="color: #c0cbd8;">{row['departamento']}</span>
+                            </div>
+                        </div>
+                        """,
+                unsafe_allow_html=True,
+            )
+
+            if es_admin:
+              col_del1, col_del2, col_del3 = st.columns([1, 2, 1])
+              with col_del2:
+                if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
+                  try:
+                    connection = get_connection()
+                    with connection.cursor() as cursor:
+                      cursor.execute(
+                          "DELETE FROM usuarios WHERE id = %s", (row["id"],)
+                      )
+                      connection.commit()
+                    connection.close()
+                    st.success("Usuario eliminado.")
+                    st.rerun()
+                  except Exception as err:
+                    st.error(f"Error: {err}")
               st.markdown(
-                  f"👤 **{row['usuario']}** | <span"
-                  f" style='color:#00d4ff;'>{row['tipo_usuario']}</span>",
+                  "<div style='margin-bottom: 10px;'></div>",
                   unsafe_allow_html=True,
               )
-              st.markdown(f"🏢 Depto: {row['departamento']}")
-
-              if es_admin:
-                col_del1, col_del2, col_del3 = st.columns([1, 2, 1])
-                with col_del2:
-                  if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
-                    try:
-                      connection = get_connection()
-                      with connection.cursor() as cursor:
-                        cursor.execute(
-                            "DELETE FROM usuarios WHERE id = %s", (row["id"],)
-                        )
-                        connection.commit()
-                      connection.close()
-                      st.success(f"Usuario eliminado.")
-                      st.rerun()
-                    except Exception as err:
-                      st.error(f"Error: {err}")
-
-              st.markdown("---")
         else:
           st.warning("No se encontraron resultados.")
       else:
@@ -348,12 +340,17 @@ with tab_lista:
 # 2. CREAR NUEVO USUARIO
 # -------------------------------------------------------------------------
 with tab_crear:
-  st.subheader("Nuevo Usuario")
-
+  st.markdown("<br>", unsafe_allow_html=True)
   if not es_admin:
     st.error("⛔ Acceso restringido a Administradores.")
   else:
+    st.markdown('<div class="hud-card">', unsafe_allow_html=True)
     with st.form("form_nuevo_usuario", clear_on_submit=True):
+      st.markdown(
+          "<h3 style='color:#00d4ff; font-size:15px; margin-bottom:15px;'>//"
+          " REGISTRAR NUEVO USUARIO</h3>",
+          unsafe_allow_html=True,
+      )
       nuevo_usuario = st.text_input(
           "Nombre de Usuario", key="create_user_name"
       )
@@ -371,6 +368,7 @@ with tab_crear:
           key="create_user_dept",
       )
 
+      st.markdown("<br>", unsafe_allow_html=True)
       col_c1, col_c2, col_c3 = st.columns([1, 2, 1])
       with col_c2:
         submitted = st.form_submit_button("Guardar Usuario")
@@ -403,17 +401,17 @@ with tab_crear:
                 connection.commit()
               connection.close()
 
-              st.success(f"¡Usuario registrado exitosamente!")
+              st.success("¡Usuario registrado exitosamente!")
               st.rerun()
           except Exception as e:
             st.error(f"Error al guardar: {e}")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------------------
 # 3. EDITAR USUARIO EXISTENTE
 # -------------------------------------------------------------------------
 with tab_editar:
-  st.subheader("Modificar Usuario")
-
+  st.markdown("<br>", unsafe_allow_html=True)
   if not es_admin:
     st.error("⛔ Acceso restringido a Administradores.")
   else:
@@ -438,11 +436,13 @@ with tab_editar:
     else:
       nombres_usuarios = [u["usuario"] for u in lista_editables]
 
+      st.markdown('<div class="hud-card">', unsafe_allow_html=True)
       usuario_seleccionado_nombre = st.selectbox(
           "Selecciona el usuario",
           nombres_usuarios,
           key="select_user_to_edit_auto",
       )
+      st.markdown("</div>", unsafe_allow_html=True)
 
       user_data = next(
           u
@@ -451,7 +451,13 @@ with tab_editar:
       )
       pwd_clara = desencriptar_pwd(str(user_data["password"] or ""))
 
+      st.markdown('<div class="hud-card">', unsafe_allow_html=True)
       with st.form("form_editar_usuario"):
+        st.markdown(
+            "<h3 style='color:#00d4ff; font-size:15px; margin-bottom:15px;'>//"
+            " MODIFICAR CREDENCIALES</h3>",
+            unsafe_allow_html=True,
+        )
         edit_usuario = st.text_input(
             "Nombre de Usuario", value=user_data["usuario"]
         )
@@ -470,6 +476,7 @@ with tab_editar:
             "Departamento", value=str(user_data["departamento"] or "")
         )
 
+        st.markdown("<br>", unsafe_allow_html=True)
         col_e1, col_e2, col_e3 = st.columns([1, 2, 1])
         with col_e2:
           actualizar_btn = st.form_submit_button("Guardar Cambios")
@@ -503,3 +510,4 @@ with tab_editar:
               st.rerun()
           except Exception as e:
             st.error(f"Error al actualizar: {e}")
+      st.markdown("</div>", unsafe_allow_html=True)
