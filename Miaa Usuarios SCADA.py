@@ -133,7 +133,7 @@ def verificar_credenciales(usuario_input, password_input):
 
 
 # -------------------------------------------------------------------------
-# ESTILO VISUAL HUD (BOTONES Y TEXTOS CORREGIDOS)
+# ESTILO VISUAL HUD (BOTONES CORREGIDOS CON TEXTO VISIBLE)
 # -------------------------------------------------------------------------
 st.markdown(
     """
@@ -173,9 +173,10 @@ st.markdown(
         color: #FFFFFF !important;
     }
     
-    /* ESTILO GENERAL PARA TODOS LOS BOTONES (INCLUYENDO ELIMINAR Y SUBMIT) */
+    /* ESTILO GENERAL Y FORZADO PARA TODOS LOS BOTONES Y SUS TEXTOS INTERNOS */
     div[data-testid="stFormSubmitButton"] button, 
-    div[data-testid="baseButton-secondary"] { 
+    button[kind="secondary"],
+    .stButton button { 
         background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%) !important; 
         color: #000000 !important; 
         font-weight: 800 !important; 
@@ -187,8 +188,10 @@ st.markdown(
         box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
     }
 
-    div[data-testid="stFormSubmitButton"] button p, 
-    div[data-testid="baseButton-secondary"] p {
+    /* FORZAR QUE CUALQUIER ELEMENTO DE TEXTO DENTRO DE LOS BOTONES SEA NEGRO Y LEGIBLE */
+    div[data-testid="stFormSubmitButton"] button *, 
+    button[kind="secondary"] *,
+    .stButton button * {
         color: #000000 !important;
         font-weight: 800 !important;
     }
@@ -231,7 +234,6 @@ if not st.session_state.autenticado:
       u = st.text_input("USUARIO")
       p = st.text_input("PASSWORD", type="password")
 
-      # Columnas simétricas para centrar perfectamente el botón de Acceder
       col_l1, col_l2, col_l3 = st.columns([1, 2, 1])
       with col_l2:
         submitted_login = st.form_submit_button("ACCEDER")
