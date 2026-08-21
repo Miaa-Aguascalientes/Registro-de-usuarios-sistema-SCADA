@@ -122,7 +122,7 @@ def verificar_credenciales(usuario_input, password_input):
 
 
 # -------------------------------------------------------------------------
-# ESTILO VISUAL GLOBAL (ELIMINACIÓN DE CONTENEDORES VACÍOS)
+# ESTILO VISUAL GLOBAL (LIMPIEZA DE CONTENEDORES VACÍOS)
 # -------------------------------------------------------------------------
 st.markdown(
     """
@@ -204,8 +204,8 @@ st.markdown(
 if not st.session_state.autenticado:
   st.markdown(
       """
-        <div class="hud-card" style="text-align: center; margin-top: 10px;">
-            <h2 style="color:#00d4ff; font-size:18px; margin-bottom: 5px;">¡Bienvenido!</h2>
+        <div style="text-align: center; margin-top: 10px; margin-bottom: 20px;">
+            <h2 style="color:#00d4ff; font-size:20px; margin-bottom: 5px;">¡Bienvenido!</h2>
             <p style="font-size: 13px; color: #8a99ad;">Ingresa tus credenciales del sistema para continuar</p>
         </div>
         """,
@@ -213,7 +213,6 @@ if not st.session_state.autenticado:
   )
 
   if not st.session_state.fase_carga:
-    st.markdown('<div class="hud-card">', unsafe_allow_html=True)
     with st.form("login_form"):
       u = st.text_input("USUARIO")
       p = st.text_input("PASSWORD", type="password")
@@ -231,9 +230,7 @@ if not st.session_state.autenticado:
           st.rerun()
         else:
           st.error("❌ ACCESO DENEGADO")
-    st.markdown("</div>", unsafe_allow_html=True)
   else:
-    st.markdown('<div class="hud-card">', unsafe_allow_html=True)
     st.markdown(
         '<h3 style="color:#00d4ff; font-size:15px; text-align:center;">//'
         " CONFIGURANDO ENTORNO SEGURO...</h3>",
@@ -243,7 +240,6 @@ if not st.session_state.autenticado:
     st.session_state.rol = st.session_state.temp_rol
     st.session_state.fase_carga = False
     st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
   st.stop()
 
 # -------------------------------------------------------------------------
