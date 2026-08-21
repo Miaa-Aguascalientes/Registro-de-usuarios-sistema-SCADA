@@ -122,7 +122,7 @@ def verificar_credenciales(usuario_input, password_input):
 
 
 # -------------------------------------------------------------------------
-# ESTILO VISUAL GLOBAL (LIMPIEZA DE CONTENEDORES VACÍOS)
+# ESTILO VISUAL GLOBAL
 # -------------------------------------------------------------------------
 st.markdown(
     """
@@ -150,7 +150,7 @@ st.markdown(
         font-weight: 600 !important;
     }
 
-    /* OCULTAR CUALQUIER CONTENEDOR VACÍO O HUÉRFANO */
+    /* OCULTAR CONTENEDORES VACÍOS */
     div.element-container:empty, div[data-testid="stVerticalBlock"] > div:empty {
         display: none !important;
     }
@@ -254,7 +254,7 @@ tab_lista, tab_crear, tab_editar = st.tabs(
 )
 
 # -------------------------------------------------------------------------
-# 1. LISTA DE USUARIOS Y BUSCADOR
+# 1. LISTA DE USUARIOS Y BUSCADOR (SOLO VISUALIZACIÓN)
 # -------------------------------------------------------------------------
 with tab_lista:
   st.markdown("<br>", unsafe_allow_html=True)
@@ -298,34 +298,13 @@ with tab_lista:
                                 <span style="font-size: 15px; font-weight: bold; color: #FFFFFF;">👤 {row['usuario']}</span>
                                 <span style="background: rgba(0,212,255,0.1); color: #00d4ff; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">{row['tipo_usuario']}</span>
                             </div>
-                            <div style="font-size: 12px; color: #8a99ad; margin-bottom: 12px;">
+                            <div style="font-size: 12px; color: #8a99ad;">
                                 🏢 Departamento: <span style="color: #c0cbd8;">{row['departamento']}</span>
                             </div>
                         </div>
                         """,
                 unsafe_allow_html=True,
             )
-
-            if es_admin:
-              col_del1, col_del2, col_del3 = st.columns([1, 2, 1])
-              with col_del2:
-                if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
-                  try:
-                    connection = get_connection()
-                    with connection.cursor() as cursor:
-                      cursor.execute(
-                          "DELETE FROM usuarios WHERE id = %s", (row["id"],)
-                      )
-                      connection.commit()
-                    connection.close()
-                    st.success("Usuario eliminado.")
-                    st.rerun()
-                  except Exception as err:
-                    st.error(f"Error: {err}")
-              st.markdown(
-                  "<div style='margin-bottom: 10px;'></div>",
-                  unsafe_allow_html=True,
-              )
         else:
           st.warning("No se encontraron resultados.")
       else:
@@ -403,7 +382,7 @@ with tab_crear:
             st.error(f"Error al guardar: {e}")
 
 # -------------------------------------------------------------------------
-# 3. EDITAR USUARIO EXISTENTE
+# 3. EDITAR Y ELIMINAR USUARIO EXISTENTE
 # -------------------------------------------------------------------------
 with tab_editar:
   st.markdown("<br>", unsafe_allow_html=True)
@@ -503,3 +482,29 @@ with tab_editar:
               st.rerun()
           except Exception as e:
             st.error(f"Error al actualizar: {e}")
+
+      # Sección de eliminación integrada debajo del formulario de edición
+      st.markdown("<br>", unsafe_allow_html=True)
+      with st.expander("⚠️ Zona de Peligro: Eliminar este usuario"):
+        st.markdown(
+            f"<p style='color: #ff4b4b; font-size: 13px;'>Estás a punto de"
+            f" eliminar permanentemente a <b>{user_data['usuario']}</b>. Esta"
+            " acción no se puede deshacer.</p>",
+            unsafe_allow_html=True,
+        )
+        col_del1, col_del2, col_del3 = st.columns([1, 2, 1])
+        with col_del2:
+          if st.button("🗑️ Confirmar Eliminación", key=f"del_tab_{user_data['id']}"):
+            try:
+              connection = get_connection()
+              if connection:
+                with connection.cursor() as cursor:
+                  cursor.execute(
+                      "DELETE FROM usuarios WHERE id = %s", (user_data["id"],)
+                  )
+                  connection.commit()
+                connection.close()
+              st.success("Usuario eliminado exitosamente.")
+              st.rerun()
+            except Exception as err:
+              st.error(f"Error al eliminar: {err}")
