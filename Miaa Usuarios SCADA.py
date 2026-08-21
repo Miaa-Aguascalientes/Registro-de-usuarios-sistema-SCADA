@@ -456,6 +456,7 @@ with tab_editar:
                         pwd_a_guardar,
                         edit_tipo,
                         edit_departamento,
+                        user_data["id"],  # 👈 Agrega esta línea al final
                     ),
                 )
                 connection.commit()
