@@ -44,14 +44,11 @@ def desencriptar_pwd(password_cifrada):
     return password_cifrada
 
 
-# --- HEADER VISUAL ESTILO TÉCNICO MIAA ---
+# --- HEADER VISUAL ESTILO TÉCNICO MIAA (SIN TEXTO DUPLICADO) ---
 st.markdown(
     """
-    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 10px; margin-bottom: 5px;">
-        <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" style="width: 110px; filter: drop-shadow(0 0 10px rgba(0,212,255,0.4));">
-    </div>
-    <div style="text-align: center; color: #8a99ad; font-size: 11px; letter-spacing: 1px; margin-bottom: 15px;">
-        MODELO INTEGRAL DE AGUAS DE AGUASCALIENTES
+    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
+        <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" style="width: 130px; filter: drop-shadow(0 0 10px rgba(0,212,255,0.4));">
     </div>
     <hr style="border: none; height: 2px; background: linear-gradient(90deg, transparent, #00d4ff, transparent); margin-bottom: 25px;">
 """,
