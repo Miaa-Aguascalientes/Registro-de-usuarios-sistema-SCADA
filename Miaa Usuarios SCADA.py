@@ -121,7 +121,6 @@ def verificar_credenciales(usuario_input, password_input):
       if res:
         pwd_real = desencriptar_pwd(res["password"])
         if str(password_input) == str(pwd_real):
-          # Restringido estrictamente solo a Administradores
           if str(res["tipo_usuario"]).strip().lower() == "administrador":
             return res["tipo_usuario"]
           else:
@@ -134,7 +133,7 @@ def verificar_credenciales(usuario_input, password_input):
 
 
 # -------------------------------------------------------------------------
-# ESTILO VISUAL HUD ADAPTADO PARA MÓVIL (CON TEXTOS EN BLANCO BRILLANTE)
+# ESTILO VISUAL HUD ADAPTADO PARA MÓVIL (TEXTOS EN BLANCO BRILLANTE)
 # -------------------------------------------------------------------------
 st.markdown(
     """
@@ -164,10 +163,16 @@ st.markdown(
         font-size: 14px !important;
     }
     
-    /* LETRAS DE LOS LABELS EN BLANCO BRILLANTE */
+    /* LETRAS DE LOS LABELS Y TEXTOS GENERALES EN BLANCO BRILLANTE */
     .stTextInput label, .stSelectbox label {
         color: #FFFFFF !important;
         font-weight: bold !important;
+    }
+
+    /* FORZAR COLOR BLANCO BRILLANTE EN CONTENEDORES DE LISTAS (USUARIOS Y DEPTO) */
+    div[data-testid="stVerticalBlock"] p, 
+    div[data-testid="stVerticalBlock"] span {
+        color: #FFFFFF !important;
     }
     
     .stButton button { 
