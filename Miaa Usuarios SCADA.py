@@ -133,7 +133,7 @@ def verificar_credenciales(usuario_input, password_input):
 
 
 # -------------------------------------------------------------------------
-# ESTILO VISUAL HUD ADAPTADO PARA MÓVIL (BOTONES AL 100% Y ALINEADOS)
+# ESTILO VISUAL HUD (BOTONES Y TEXTOS CORREGIDOS)
 # -------------------------------------------------------------------------
 st.markdown(
     """
@@ -142,7 +142,7 @@ st.markdown(
     .block-container { padding: 8px !important; max-width: 100% !important; }
     header, footer { visibility: hidden !important; }
     
-    /* EFECTOS Y ANIMACIONES REDUCIDAS PARA MÓVIL */
+    /* EFECTOS Y ANIMACIONES */
     .visual-core { position: relative; width: 180px; height: 180px; margin: 0 auto 20px auto; }
     .ring { position: absolute; border-radius: 50%; border: 3px solid transparent; animation: spin var(--d) linear infinite; }
     .r1 { width: 100%; height: 100%; border-top: 4px solid #00d4ff; border-bottom: 4px solid #00d4ff; --d: 4s; }
@@ -163,47 +163,34 @@ st.markdown(
         font-size: 14px !important;
     }
     
-    /* LETRAS DE LOS LABELS Y TEXTOS GENERALES EN BLANCO BRILLANTE */
     .stTextInput label, .stSelectbox label {
         color: #FFFFFF !important;
         font-weight: bold !important;
     }
 
-    /* FORZAR COLOR BLANCO BRILLANTE EN CONTENEDORES DE LISTAS */
     div[data-testid="stVerticalBlock"] p, 
     div[data-testid="stVerticalBlock"] span {
         color: #FFFFFF !important;
     }
     
-    /* BOTONES DE FORMULARIO LIMPIOS Y AL 100% DE ANCHO */
-    div[data-testid="stFormSubmitButton"] {
-        width: 100% !important;
-    }
-
-    div[data-testid="stFormSubmitButton"] button { 
+    /* ESTILO GENERAL PARA TODOS LOS BOTONES (INCLUYENDO ELIMINAR Y SUBMIT) */
+    div[data-testid="stFormSubmitButton"] button, 
+    div[data-testid="baseButton-secondary"] { 
         background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%) !important; 
         color: #000000 !important; 
         font-weight: 800 !important; 
         font-size: 14px !important;
-        letter-spacing: 0.5px;
         width: 100% !important; 
-        height: 45px; 
+        height: 42px; 
         border: none !important; 
-        border-radius: 8px !important;
-        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
-        transition: all 0.3s ease;
+        border-radius: 6px !important;
+        box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
     }
-    
-    div[data-testid="stFormSubmitButton"] button:hover {
-        opacity: 0.9;
-        box-shadow: 0 6px 20px rgba(0, 212, 255, 0.5);
-    }
-    
-    div[data-testid="stFormSubmitButton"] button p {
+
+    div[data-testid="stFormSubmitButton"] button p, 
+    div[data-testid="baseButton-secondary"] p {
         color: #000000 !important;
         font-weight: 800 !important;
-        font-size: 14px !important;
-        white-space: nowrap !important;
     }
 
     .login-box { 
@@ -219,7 +206,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------------------
-# PANTALLA DE LOGIN (OPTIMIZADA EN VERTICAL PARA CELULAR)
+# PANTALLA DE LOGIN
 # -------------------------------------------------------------------------
 if not st.session_state.autenticado:
   st.markdown(
@@ -243,7 +230,12 @@ if not st.session_state.autenticado:
     with st.form("login_form"):
       u = st.text_input("USUARIO")
       p = st.text_input("PASSWORD", type="password")
-      submitted_login = st.form_submit_button("ACCEDER")
+
+      # Columnas simétricas para centrar perfectamente el botón de Acceder
+      col_l1, col_l2, col_l3 = st.columns([1, 2, 1])
+      with col_l2:
+        submitted_login = st.form_submit_button("ACCEDER")
+
       if submitted_login:
         rol = verificar_credenciales(u, p)
         if rol:
@@ -377,7 +369,9 @@ with tab_crear:
           key="create_user_dept",
       )
 
-      submitted = st.form_submit_button("Guardar Usuario")
+      col_c1, col_c2, col_c3 = st.columns([1, 2, 1])
+      with col_c2:
+        submitted = st.form_submit_button("Guardar Usuario")
 
       if submitted:
         if not nuevo_usuario or not nuevo_password:
@@ -474,7 +468,9 @@ with tab_editar:
             "Departamento", value=str(user_data["departamento"] or "")
         )
 
-        actualizar_btn = st.form_submit_button("Guardar Cambios")
+        col_e1, col_e2, col_e3 = st.columns([1, 2, 1])
+        with col_e2:
+          actualizar_btn = st.form_submit_button("Guardar Cambios")
 
         if actualizar_btn:
           try:
