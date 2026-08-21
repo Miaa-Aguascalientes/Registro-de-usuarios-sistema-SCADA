@@ -129,6 +129,9 @@ def verificar_credenciales(usuario_input, password_input):
             st.error("⛔ Acceso denegado: Solo administradores permitidos.")
             return None
     return None
+  except Exception as e:
+    st.error(f"Error al consultar usuario: {e}")
+    return None
 
 
 # -------------------------------------------------------------------------
