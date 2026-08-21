@@ -12,12 +12,11 @@ import streamlit as st
 st.set_page_config(
     page_title="Sistema registros",
     page_icon="https://www.miaa.mx/favicon.ico",
-    layout="wide",
+    layout="centered",  # Cambiado a centered para mejor control responsivo en móviles
     initial_sidebar_state="collapsed",
 )
 
 # --- LLAVE DE CIFRADO FIJA Y SEGURA ---
-# Garantiza que el cifrado y descifrado sean consistentes en toda la app.
 SECRET_FERNET_KEY = b"12345678901234567890123456789012"
 
 
@@ -42,7 +41,6 @@ def desencriptar_pwd(password_cifrada):
     f = get_fernet_cipher()
     return f.decrypt(password_cifrada.encode()).decode()
   except Exception:
-    # Si la contraseña en la BD era texto plano antiguo, la devuelve tal cual
     return password_cifrada
 
 
@@ -50,8 +48,8 @@ def desencriptar_pwd(password_cifrada):
 st.markdown(
     """
     <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
-        <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" style="width: 100px;">
-        <h1 style="margin: 0; color: #FFFFFF; font-size: 20px; font-weight: bold;">Registro de usuarios</h1>
+        <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" style="width: 80px;">
+        <h1 style="margin: 0; color: #FFFFFF; font-size: 18px; font-weight: bold;">Registro de usuarios</h1>
     </div>
     <hr style="border: none; height: 2px; background-color: #00d4ff; margin-top: 5px; margin-bottom: 20px;">
 """,
@@ -59,7 +57,8 @@ st.markdown(
 )
 
 # -------------------------------------------------------------------------
-# 0. SECCIÓN ---------------------------------------- SISTEMA DE AUTENTICACIÓN HUD DEFINITIVO --------------------------------------------------------------------
+# SISTEMA DE AUTENTICACIÓN
+# -------------------------------------------------------------------------
 if "autenticado" not in st.session_state:
   query_params = st.query_params
   if query_params.get("access") == "granted":
@@ -87,7 +86,6 @@ def get_mysql_telemetria_engine():
 
 
 def get_connection():
-  """Función auxiliar para pymysql parseando la URL de tus secretos"""
   try:
     url = st.secrets["databases"]["url_dic"]
     clean_url = url.replace("mysql+pymysql://", "")
@@ -129,51 +127,52 @@ def verificar_credenciales(usuario_input, password_input):
     return None
 
 
-# 1. SECCIÓN -------------------------------------------------------ESTILO VISUAL HUD AJUSTADO PARA MÓVIL ----------------------------------------------------------------------------------
+# -------------------------------------------------------------------------
+# ESTILO VISUAL HUD ADAPTADO PARA MÓVIL
+# -------------------------------------------------------------------------
 st.markdown(
     """
 <style>
-    /* Configuración base */
     .stApp { background-color: #050a10 !important; }
-    .block-container { padding: 10px !important; max-width: 100% !important; }
+    .block-container { padding: 8px !important; max-width: 100% !important; }
     header, footer { visibility: hidden !important; }
     
-    /* EFECTOS Y ANIMACIONES */
-    .visual-core { position: relative; width: 280px; height: 280px; margin: auto; }
-    .ring { position: absolute; border-radius: 50%; border: 4px solid transparent; animation: spin var(--d) linear infinite; }
-    .r1 { width: 100%; height: 100%; border-top: 6px solid #00d4ff; border-bottom: 6px solid #00d4ff; --d: 4s; }
+    /* EFECTOS Y ANIMACIONES REDUCIDAS PARA MÓVIL */
+    .visual-core { position: relative; width: 180px; height: 180px; margin: 0 auto 20px auto; }
+    .ring { position: absolute; border-radius: 50%; border: 3px solid transparent; animation: spin var(--d) linear infinite; }
+    .r1 { width: 100%; height: 100%; border-top: 4px solid #00d4ff; border-bottom: 4px solid #00d4ff; --d: 4s; }
     .r2 { width: 78%; height: 78%; top: 11%; left: 11%; border: 2px dashed #00d4ff; --d: 8s; animation-direction: reverse; }
     .center-logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
-    .logo-miaa { width: 130px; filter: drop-shadow(0 0 10px #00d4ff); }
+    .logo-miaa { width: 80px; filter: drop-shadow(0 0 8px #00d4ff); }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
     /* ESTILO UNIFICADO DE INPUTS */
     div[data-testid="stTextInputRootElement"] {
         background-color: #0d1b2a !important;
         border: 1px solid #1f4068 !important;
-        border-radius: 0px !important;
+        border-radius: 4px !important;
         box-shadow: none !important;
-        height: 40px !important;
-    }
-    div[data-testid="stTextInputRootElement"] div[data-baseweb="base-input"] {
-        background-color: transparent !important;
     }
     .stTextInput input {
-        background-color: transparent !important;
         color: #00d4ff !important;
-        font-size: 15px !important;
+        font-size: 14px !important;
     }
-    div[data-testid="stTextInputRootElement"]:focus-within {
-        border: 1px solid #00d4ff !important;
-    }
-
+    
     .stButton button { 
-        background: #00d4ff !important; color: #050a10 !important; font-weight: bold !important; 
-        width: 100%; height: 45px; border: none !important; 
+        background: #00d4ff !important; 
+        color: #050a10 !important; 
+        font-weight: bold !important; 
+        width: 100%; 
+        height: 42px; 
+        border: none !important; 
+        border-radius: 4px;
     }
     .login-box { 
-        background: rgba(0, 212, 255, 0.05); border-left: 6px solid #00d4ff; 
-        padding: 20px; margin-top: 20px; width: 100%; 
+        background: rgba(0, 212, 255, 0.05); 
+        border-left: 4px solid #00d4ff; 
+        padding: 15px; 
+        margin-top: 10px; 
+        width: 100%; 
     }
 </style>
 """,
@@ -181,14 +180,11 @@ st.markdown(
 )
 
 # -------------------------------------------------------------------------
-# PANTALLA DE LOGIN SI NO ESTÁ AUTENTICADO
+# PANTALLA DE LOGIN (OPTIMIZADA EN VERTICAL PARA CELULAR)
 # -------------------------------------------------------------------------
 if not st.session_state.autenticado:
-  col_vis, col_log = st.columns([1, 1])
-  with col_vis:
-    st.markdown('<div style="height: 5vh;"></div>', unsafe_allow_html=True)
-    st.markdown(
-        """
+  st.markdown(
+      """
         <div class="visual-core">
             <div class="ring r1"></div><div class="ring r2"></div>
             <div class="center-logo">
@@ -196,68 +192,61 @@ if not st.session_state.autenticado:
             </div>
         </div>
         """,
+      unsafe_allow_html=True,
+  )
+
+  if not st.session_state.fase_carga:
+    st.markdown('<div class="login-box">', unsafe_allow_html=True)
+    st.markdown(
+        '<h2 style="color:#00d4ff; font-size:15px;">// CREDENCIALES SCADA</h2>',
         unsafe_allow_html=True,
     )
-
-  with col_log:
-    if not st.session_state.fase_carga:
-      st.markdown('<div class="login-box">', unsafe_allow_html=True)
-      st.markdown(
-          '<h2 style="color:#00d4ff; font-size:16px;">// CREDENCIALES'
-          " SCADA</h2>",
-          unsafe_allow_html=True,
-      )
-      with st.form("login_form"):
-        u = st.text_input("USUARIO")
-        p = st.text_input("PASSWORD", type="password")
-        if st.form_submit_button("ACCEDER"):
-          rol = verificar_credenciales(u, p)
-          if rol:
-            st.session_state.temp_rol = rol
-            st.session_state.fase_carga = True
-            st.rerun()
-          else:
-            st.error("❌ ACCESO DENEGADO")
-      st.markdown("</div>", unsafe_allow_html=True)
-    else:
-      st.markdown('<div class="login-box">', unsafe_allow_html=True)
-      st.markdown(
-          '<h2 style="color:#00d4ff; font-size:16px;">// CONFIGURANDO ENTORNO'
-          " MÓVIL...</h2>",
-          unsafe_allow_html=True,
-      )
-      st.session_state.autenticado = True
-      st.session_state.rol = st.session_state.temp_rol
-      st.session_state.fase_carga = False
-      st.rerun()
-      st.markdown("</div>", unsafe_allow_html=True)
+    with st.form("login_form"):
+      u = st.text_input("USUARIO")
+      p = st.text_input("PASSWORD", type="password")
+      if st.form_submit_button("ACCEDER"):
+        rol = verificar_credenciales(u, p)
+        if rol:
+          st.session_state.temp_rol = rol
+          st.session_state.fase_carga = True
+          st.rerun()
+        else:
+          st.error("❌ ACCESO DENEGADO")
+    st.markdown("</div>", unsafe_allow_html=True)
+  else:
+    st.markdown('<div class="login-box">', unsafe_allow_html=True)
+    st.markdown(
+        '<h2 style="color:#00d4ff; font-size:15px;">// CONFIGURANDO ENTORNO'
+        " MÓVIL...</h2>",
+        unsafe_allow_html=True,
+    )
+    st.session_state.autenticado = True
+    st.session_state.rol = st.session_state.temp_rol
+    st.session_state.fase_carga = False
+    st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
   st.stop()
 
 # -------------------------------------------------------------------------
 # APLICACIÓN PRINCIPAL (POST-AUTENTICACIÓN)
 # -------------------------------------------------------------------------
-
-# Validar si el rol actual es Administrador
 es_admin = (
     str(st.session_state.get("rol", "")).strip().lower() == "administrador"
 )
 
-# Pestañas principales
-tab_lista, tab_crear, tab_editar = st.tabs([
-    "📋 Lista de Usuarios",
-    "➕ Nuevo Usuario",
-    "✏️ Editar Usuario",
-])
+tab_lista, tab_crear, tab_editar = st.tabs(
+    ["📋 Lista", "➕ Nuevo", "✏️ Editar"]
+)
 
 # -------------------------------------------------------------------------
 # 1. LISTA DE USUARIOS Y BUSCADOR
 # -------------------------------------------------------------------------
 with tab_lista:
-  st.subheader("Usuarios Registrados")
+  st.subheader("Usuarios")
 
   busqueda = st.text_input(
-      "🔍 Buscar usuario por nombre, departamento o tipo",
-      placeholder="Escribe para filtrar...",
+      "🔍 Buscar usuario",
+      placeholder="Filtro...",
       key="search_list_tab",
   )
 
@@ -289,88 +278,70 @@ with tab_lista:
         if not df_usuarios.empty:
           for _, row in df_usuarios.iterrows():
             with st.container():
-              if es_admin:
-                cols = st.columns([3, 2, 2, 1])
-              else:
-                cols = st.columns([3, 2, 2])
-
-              with cols[0]:
-                st.markdown(f"👤 **{row['usuario']}**")
-
-              with cols[1]:
-                st.markdown(f"🏢 {row['departamento']}")
-
-              with cols[2]:
-                st.markdown(f"📌 *{row['tipo_usuario']}*")
+              # Diseño en una sola columna vertical por registro para evitar desbordes en móvil
+              st.markdown(
+                  f"👤 **{row['usuario']}** | <span"
+                  f" style='color:#00d4ff;'>{row['tipo_usuario']}</span>",
+                  unsafe_allow_html=True,
+              )
+              st.markdown(f"🏢 Depto: {row['departamento']}")
 
               if es_admin:
-                with cols[3]:
-                  if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
-                    try:
-                      connection = get_connection()
-                      with connection.cursor() as cursor:
-                        cursor.execute(
-                            "DELETE FROM usuarios WHERE id = %s", (row["id"],)
-                        )
-                        connection.commit()
-                      connection.close()
-                      st.success(f"Usuario {row['usuario']} eliminado.")
-                      st.rerun()
-                    except Exception as err:
-                      st.error(f"Error al eliminar: {err}")
+                if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
+                  try:
+                    connection = get_connection()
+                    with connection.cursor() as cursor:
+                      cursor.execute(
+                          "DELETE FROM usuarios WHERE id = %s", (row["id"],)
+                      )
+                      connection.commit()
+                    connection.close()
+                    st.success(f"Usuario eliminado.")
+                    st.rerun()
+                  except Exception as err:
+                    st.error(f"Error: {err}")
 
               st.markdown("---")
         else:
-          st.warning(
-              "No se encontraron usuarios que coincidan con la búsqueda."
-          )
+          st.warning("No se encontraron resultados.")
       else:
-        st.info("No hay usuarios registrados en la base de datos.")
+        st.info("No hay registros.")
   except Exception as e:
-    st.error(f"Error al conectar con la base de datos: {e}")
+    st.error(f"Error de conexión: {e}")
 
 # -------------------------------------------------------------------------
-# 2. CREAR NUEVO USUARIO (Restringido a Administradores)
+# 2. CREAR NUEVO USUARIO
 # -------------------------------------------------------------------------
 with tab_crear:
-  st.subheader("Registrar Nuevo Usuario")
+  st.subheader("Nuevo Usuario")
 
   if not es_admin:
-    st.error(
-        "⛔ Acceso restringido. Solo los usuarios con rol de **Administrador**"
-        " pueden dar de alta nuevos usuarios."
-    )
+    st.error("⛔ Acceso restringido a Administradores.")
   else:
     with st.form("form_nuevo_usuario", clear_on_submit=True):
-      col1, col2 = st.columns(2)
+      # Columnas eliminadas en favor de diseño vertical para celular
+      nuevo_usuario = st.text_input(
+          "Nombre de Usuario", key="create_user_name"
+      )
+      nuevo_password = st.text_input(
+          "Contraseña", type="password", key="create_user_pwd"
+      )
 
-      with col1:
-        nuevo_usuario = st.text_input(
-            "Nombre de Usuario", key="create_user_name"
-        )
-        nuevo_password = st.text_input(
-            "Contraseña", type="password", key="create_user_pwd"
-        )
-
-      with col2:
-        tipo_usuario_opciones = ["Administrador", "Operador", "Consulta"]
-        nuevo_tipo = st.selectbox(
-            "Tipo de Usuario", tipo_usuario_opciones, key="create_user_type"
-        )
-        nuevo_departamento = st.text_input(
-            "Departamento",
-            placeholder="Ej. Telemetría, Operaciones",
-            key="create_user_dept",
-        )
+      tipo_usuario_opciones = ["Administrador", "Operador", "Consulta"]
+      nuevo_tipo = st.selectbox(
+          "Tipo de Usuario", tipo_usuario_opciones, key="create_user_type"
+      )
+      nuevo_departamento = st.text_input(
+          "Departamento",
+          placeholder="Ej. Telemetría",
+          key="create_user_dept",
+      )
 
       submitted = st.form_submit_button("Guardar Usuario")
 
       if submitted:
         if not nuevo_usuario or not nuevo_password:
-          st.error(
-              "Los campos Nombre de Usuario y Contraseña son obligatorios.",
-              icon="🚨",
-          )
+          st.error("Campos obligatorios vacíos.", icon="🚨")
         else:
           try:
             nuevo_id = str(random.randint(1000000000, 9999999999))
@@ -396,24 +367,19 @@ with tab_crear:
                 connection.commit()
               connection.close()
 
-              st.success(
-                  f"¡Usuario **{nuevo_usuario}** registrado exitosamente!"
-              )
+              st.success(f"¡Usuario registrado exitosamente!")
               st.rerun()
           except Exception as e:
-            st.error(f"Error al guardar el usuario en la base de datos: {e}")
+            st.error(f"Error al guardar: {e}")
 
 # -------------------------------------------------------------------------
-# 3. EDITAR USUARIO EXISTENTE CON AUTOCOMPLETADO (Restringido a Administradores)
+# 3. EDITAR USUARIO EXISTENTE
 # -------------------------------------------------------------------------
 with tab_editar:
-  st.subheader("Modificar Datos de Usuario")
+  st.subheader("Modificar Usuario")
 
   if not es_admin:
-    st.error(
-        "⛔ Acceso restringido. Solo los usuarios con rol de **Administrador**"
-        " pueden editar usuarios."
-    )
+    st.error("⛔ Acceso restringido a Administradores.")
   else:
     try:
       connection = get_connection()
@@ -429,15 +395,15 @@ with tab_editar:
         lista_editables = []
     except Exception as e:
       lista_editables = []
-      st.error(f"Error al cargar usuarios para edición: {e}")
+      st.error(f"Error al cargar: {e}")
 
     if not lista_editables:
-      st.warning("No hay usuarios disponibles para editar.")
+      st.warning("No hay usuarios disponibles.")
     else:
       nombres_usuarios = [u["usuario"] for u in lista_editables]
 
       usuario_seleccionado_nombre = st.selectbox(
-          "Selecciona o escribe el nombre del usuario",
+          "Selecciona el usuario",
           nombres_usuarios,
           key="select_user_to_edit_auto",
       )
@@ -447,41 +413,32 @@ with tab_editar:
           for u in lista_editables
           if u["usuario"] == usuario_seleccionado_nombre
       )
-
-      # Desencriptamos la contraseña cifrada para que se vea legible en pantalla
       pwd_clara = desencriptar_pwd(str(user_data["password"] or ""))
 
       with st.form("form_editar_usuario"):
-        col_e1, col_e2 = st.columns(2)
+        # Estructura vertical optimizada para pantallas pequeñas
+        edit_usuario = st.text_input(
+            "Nombre de Usuario", value=user_data["usuario"]
+        )
+        edit_password = st.text_input("Contraseña", value=pwd_clara)
 
-        with col_e1:
-          edit_usuario = st.text_input(
-              "Nombre de Usuario", value=user_data["usuario"]
-          )
-          # Contraseña visible en texto claro para el administrador
-          edit_password = st.text_input(
-              "Contraseña", value=pwd_clara
-          )
+        tipo_usuario_opciones = ["Administrador", "Operador", "Consulta"]
+        try:
+          index_tipo = tipo_usuario_opciones.index(user_data["tipo_usuario"])
+        except ValueError:
+          index_tipo = 0
 
-        with col_e2:
-          tipo_usuario_opciones = ["Administrador", "Operador", "Consulta"]
-          try:
-            index_tipo = tipo_usuario_opciones.index(user_data["tipo_usuario"])
-          except ValueError:
-            index_tipo = 0
-
-          edit_tipo = st.selectbox(
-              "Tipo de Usuario", tipo_usuario_opciones, index=index_tipo
-          )
-          edit_departamento = st.text_input(
-              "Departamento", value=str(user_data["departamento"] or "")
-          )
+        edit_tipo = st.selectbox(
+            "Tipo de Usuario", tipo_usuario_opciones, index=index_tipo
+        )
+        edit_departamento = st.text_input(
+            "Departamento", value=str(user_data["departamento"] or "")
+        )
 
         actualizar_btn = st.form_submit_button("Guardar Cambios")
 
         if actualizar_btn:
           try:
-            # Ciframos de nuevo antes de guardar en base de datos
             pwd_a_guardar = encriptar_pwd(edit_password)
 
             connection = get_connection()
@@ -499,16 +456,12 @@ with tab_editar:
                         pwd_a_guardar,
                         edit_tipo,
                         edit_departamento,
-                        user_data["id"],
                     ),
                 )
                 connection.commit()
               connection.close()
 
-              st.success(
-                  f"¡El usuario **{edit_usuario}** ha sido actualizado"
-                  " correctamente!"
-              )
+              st.success("¡Actualizado correctamente!")
               st.rerun()
           except Exception as e:
-            st.error(f"Error al actualizar el usuario: {e}")
+            st.error(f"Error al actualizar: {e}")
