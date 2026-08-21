@@ -12,7 +12,7 @@ import streamlit as st
 st.set_page_config(
     page_title="Sistema registros",
     page_icon="https://www.miaa.mx/favicon.ico",
-    layout="centered",  # Cambiado a centered para mejor control responsivo en móviles
+    layout="centered",
     initial_sidebar_state="collapsed",
 )
 
@@ -117,15 +117,14 @@ def verificar_credenciales(usuario_input, password_input):
         )
         res = cursor.fetchone()
       connection.close()
-      
+
       if res:
         pwd_real = desencriptar_pwd(res["password"])
-        # Solo permite el acceso si la contraseña coincide Y es Administrador
         if str(password_input) == str(pwd_real):
+          # Restringido estrictamente solo a Administradores
           if str(res["tipo_usuario"]).strip().lower() == "administrador":
             return res["tipo_usuario"]
           else:
-            # Puedes mostrar un mensaje específico si intentan entrar con otro rol
             st.error("⛔ Acceso denegado: Solo administradores permitidos.")
             return None
     return None
@@ -135,7 +134,7 @@ def verificar_credenciales(usuario_input, password_input):
 
 
 # -------------------------------------------------------------------------
-# ESTILO VISUAL HUD ADAPTADO PARA MÓVIL
+# ESTILO VISUAL HUD ADAPTADO PARA MÓVIL (CON TEXTOS EN BLANCO BRILLANTE)
 # -------------------------------------------------------------------------
 st.markdown(
     """
@@ -163,6 +162,12 @@ st.markdown(
     .stTextInput input {
         color: #00d4ff !important;
         font-size: 14px !important;
+    }
+    
+    /* LETRAS DE LOS LABELS EN BLANCO BRILLANTE */
+    .stTextInput label, .stSelectbox label {
+        color: #FFFFFF !important;
+        font-weight: bold !important;
     }
     
     .stButton button { 
@@ -285,7 +290,6 @@ with tab_lista:
         if not df_usuarios.empty:
           for _, row in df_usuarios.iterrows():
             with st.container():
-              # Diseño en una sola columna vertical por registro para evitar desbordes en móvil
               st.markdown(
                   f"👤 **{row['usuario']}** | <span"
                   f" style='color:#00d4ff;'>{row['tipo_usuario']}</span>",
@@ -326,7 +330,6 @@ with tab_crear:
     st.error("⛔ Acceso restringido a Administradores.")
   else:
     with st.form("form_nuevo_usuario", clear_on_submit=True):
-      # Columnas eliminadas en favor de diseño vertical para celular
       nuevo_usuario = st.text_input(
           "Nombre de Usuario", key="create_user_name"
       )
@@ -423,7 +426,6 @@ with tab_editar:
       pwd_clara = desencriptar_pwd(str(user_data["password"] or ""))
 
       with st.form("form_editar_usuario"):
-        # Estructura vertical optimizada para pantallas pequeñas
         edit_usuario = st.text_input(
             "Nombre de Usuario", value=user_data["usuario"]
         )
@@ -463,7 +465,7 @@ with tab_editar:
                         pwd_a_guardar,
                         edit_tipo,
                         edit_departamento,
-                        user_data["id"],  # 👈 Agrega esta línea al final
+                        user_data["id"],
                     ),
                 )
                 connection.commit()
