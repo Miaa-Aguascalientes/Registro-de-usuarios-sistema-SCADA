@@ -404,6 +404,71 @@ with tab_crear:
             st.error(f"Error al guardar: {e}")
 
 # -------------------------------------------------------------------------
+# 2. CREAR NUEVO USUARIO
+# -------------------------------------------------------------------------
+with tab_crear:
+  st.subheader("Nuevo Usuario")
+
+  if not es_admin:
+    st.error("⛔ Acceso restringido a Administradores.")
+  else:
+    with st.form("form_nuevo_usuario", clear_on_submit=True):
+      nuevo_usuario = st.text_input(
+          "Nombre de Usuario", key="create_user_name"
+      )
+      nuevo_password = st.text_input(
+          "Contraseña", type="password", key="create_user_pwd"
+      )
+
+      tipo_usuario_opciones = ["Administrador", "Operador", "Consulta"]
+      nuevo_tipo = st.selectbox(
+          "Tipo de Usuario", tipo_usuario_opciones, key="create_user_type"
+      )
+      nuevo_departamento = st.text_input(
+          "Departamento",
+          placeholder="Ej. Telemetría",
+          key="create_user_dept",
+      )
+
+      # Columnas simétricas para centrar el botón perfectamente a la mitad
+      col_c1, col_c2, col_c3 = st.columns([1, 2, 1])
+      with col_c2:
+        submitted = st.form_submit_button("Guardar Usuario")
+
+      if submitted:
+        if not nuevo_usuario or not nuevo_password:
+          st.error("Campos obligatorios vacíos.", icon="🚨")
+        else:
+          try:
+            nuevo_id = str(random.randint(1000000000, 9999999999))
+            password_cifrada = encriptar_pwd(nuevo_password)
+
+            connection = get_connection()
+            if connection:
+              with connection.cursor() as cursor:
+                query = """
+                                    INSERT INTO usuarios (id, usuario, password, tipo_usuario, departamento) 
+                                    VALUES (%s, %s, %s, %s, %s)
+                                """
+                cursor.execute(
+                    query,
+                    (
+                        nuevo_id,
+                        nuevo_usuario,
+                        password_cifrada,
+                        nuevo_tipo,
+                        nuevo_departamento,
+                    ),
+                )
+                connection.commit()
+              connection.close()
+
+              st.success(f"¡Usuario registrado exitosamente!")
+              st.rerun()
+          except Exception as e:
+            st.error(f"Error al guardar: {e}")
+
+# -------------------------------------------------------------------------
 # 3. EDITAR USUARIO EXISTENTE
 # -------------------------------------------------------------------------
 with tab_editar:
@@ -465,7 +530,10 @@ with tab_editar:
             "Departamento", value=str(user_data["departamento"] or "")
         )
 
-        actualizar_btn = st.form_submit_button("Guardar Cambios")
+        # Columnas simétricas para centrar el botón a la mitad exacta de la página
+        col_e1, col_e2, col_e3 = st.columns([1, 2, 1])
+        with col_e2:
+          actualizar_btn = st.form_submit_button("Guardar Cambios")
 
         if actualizar_btn:
           try:
