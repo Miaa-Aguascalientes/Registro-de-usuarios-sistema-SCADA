@@ -121,7 +121,7 @@ def verificar_credenciales(usuario_input, password_input):
 
 
 # -------------------------------------------------------------------------
-# ESTILO VISUAL GLOBAL (TARJETAS HUD, BOTONES Y CONTENEDORES)
+# ESTILO VISUAL GLOBAL (CORREGIDO SIN CONTENEDORES HUÉRFANOS)
 # -------------------------------------------------------------------------
 st.markdown(
     """
@@ -147,11 +147,6 @@ st.markdown(
     .stTextInput label, .stSelectbox label {
         color: #FFFFFF !important;
         font-weight: 600 !important;
-    }
-
-    /* TARJETAS DE CONTENEDOR ESTILO HUD */
-    div.element-container {
-        color: #ffffff;
     }
 
     /* ESTILO GENERAL PARA BOTONES Y ACCIONES */
@@ -182,7 +177,7 @@ st.markdown(
         box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
     }
 
-    /* CAJA DE LOGIN / CONTENEDOR PRINCIPAL */
+    /* CAJA DE TARJETA HUD LIMPIA */
     .hud-card { 
         background: rgba(11, 22, 36, 0.7); 
         border: 1px solid #19324c;
@@ -344,7 +339,6 @@ with tab_crear:
   if not es_admin:
     st.error("⛔ Acceso restringido a Administradores.")
   else:
-    st.markdown('<div class="hud-card">', unsafe_allow_html=True)
     with st.form("form_nuevo_usuario", clear_on_submit=True):
       st.markdown(
           "<h3 style='color:#00d4ff; font-size:15px; margin-bottom:15px;'>//"
@@ -405,7 +399,6 @@ with tab_crear:
               st.rerun()
           except Exception as e:
             st.error(f"Error al guardar: {e}")
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------------------
 # 3. EDITAR USUARIO EXISTENTE
@@ -436,13 +429,11 @@ with tab_editar:
     else:
       nombres_usuarios = [u["usuario"] for u in lista_editables]
 
-      st.markdown('<div class="hud-card">', unsafe_allow_html=True)
       usuario_seleccionado_nombre = st.selectbox(
           "Selecciona el usuario",
           nombres_usuarios,
           key="select_user_to_edit_auto",
       )
-      st.markdown("</div>", unsafe_allow_html=True)
 
       user_data = next(
           u
@@ -451,7 +442,7 @@ with tab_editar:
       )
       pwd_clara = desencriptar_pwd(str(user_data["password"] or ""))
 
-      st.markdown('<div class="hud-card">', unsafe_allow_html=True)
+      st.markdown("<br>", unsafe_allow_html=True)
       with st.form("form_editar_usuario"):
         st.markdown(
             "<h3 style='color:#00d4ff; font-size:15px; margin-bottom:15px;'>//"
@@ -510,4 +501,3 @@ with tab_editar:
               st.rerun()
           except Exception as e:
             st.error(f"Error al actualizar: {e}")
-      st.markdown("</div>", unsafe_allow_html=True)
