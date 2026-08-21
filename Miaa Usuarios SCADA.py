@@ -133,7 +133,7 @@ def verificar_credenciales(usuario_input, password_input):
 
 
 # -------------------------------------------------------------------------
-# ESTILO VISUAL HUD ADAPTADO PARA MÓVIL (BOTONES CENTRADOS Y TEXTO NEGRO)
+# ESTILO VISUAL HUD ADAPTADO PARA MÓVIL (BOTONES ESTILIZADOS Y MODERNOS)
 # -------------------------------------------------------------------------
 st.markdown(
     """
@@ -175,20 +175,31 @@ st.markdown(
         color: #FFFFFF !important;
     }
     
-    /* BOTONES CON FONDO TURQUESA Y TEXTO NEGRO SÓLIDO */
+    /* DISEÑO DE BOTONES PRINCIPALES (MODERNOS, REDONDEADOS Y UNA SOLA LÍNEA) */
     div[data-testid="stFormSubmitButton"] button { 
-        background: #00d4ff !important; 
+        background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%) !important; 
         color: #000000 !important; 
-        font-weight: bold !important; 
+        font-weight: 800 !important; 
+        font-size: 14px !important;
+        letter-spacing: 0.5px;
         width: 100% !important; 
-        height: 42px; 
+        height: 45px; 
         border: none !important; 
-        border-radius: 4px;
+        border-radius: 25px !important;
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    div[data-testid="stFormSubmitButton"] button:hover {
+        opacity: 0.9;
+        box-shadow: 0 6px 20px rgba(0, 212, 255, 0.5);
     }
     
     div[data-testid="stFormSubmitButton"] button p {
         color: #000000 !important;
-        font-weight: bold !important;
+        font-weight: 800 !important;
+        font-size: 14px !important;
+        white-space: nowrap !important;
     }
 
     .login-box { 
