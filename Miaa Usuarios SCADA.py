@@ -88,7 +88,10 @@ def get_connection():
         password=password,
         database=database,
         port=3306,
-        connect_timeout=5,
+        connect_timeout=15,  # Tiempo ampliado para evitar timeouts
+        read_timeout=15,
+        write_timeout=15,
+        autocommit=True,
         cursorclass=pymysql.cursors.DictCursor,
     )
   except Exception as e:
