@@ -133,7 +133,7 @@ def verificar_credenciales(usuario_input, password_input):
 
 
 # -------------------------------------------------------------------------
-# ESTILO VISUAL HUD ADAPTADO PARA MÓVIL (BOTONES CENTRADOS POR CSS)
+# ESTILO VISUAL HUD ADAPTADO PARA MÓVIL (BOTONES AL 100% Y ALINEADOS)
 # -------------------------------------------------------------------------
 st.markdown(
     """
@@ -175,10 +175,8 @@ st.markdown(
         color: #FFFFFF !important;
     }
     
-    /* CENTRADO ABSOLUTO Y DISEÑO DE BOTONES DE FORMULARIO */
+    /* BOTONES DE FORMULARIO LIMPIOS Y AL 100% DE ANCHO */
     div[data-testid="stFormSubmitButton"] {
-        display: flex !important;
-        justify-content: center !important;
         width: 100% !important;
     }
 
@@ -188,14 +186,11 @@ st.markdown(
         font-weight: 800 !important; 
         font-size: 14px !important;
         letter-spacing: 0.5px;
-        width: 60% !important; 
-        max-width: 250px !important;
+        width: 100% !important; 
         height: 45px; 
         border: none !important; 
-        border-radius: 25px !important;
+        border-radius: 8px !important;
         box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
-        margin: 0 auto !important;
-        display: block !important;
         transition: all 0.3s ease;
     }
     
