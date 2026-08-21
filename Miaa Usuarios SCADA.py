@@ -133,7 +133,7 @@ def verificar_credenciales(usuario_input, password_input):
 
 
 # -------------------------------------------------------------------------
-# ESTILO VISUAL HUD ADAPTADO PARA MÓVIL (TEXTOS EN BLANCO BRILLANTE)
+# ESTILO VISUAL HUD ADAPTADO PARA MÓVIL (BOTONES CON TEXTO NEGRO)
 # -------------------------------------------------------------------------
 st.markdown(
     """
@@ -175,15 +175,22 @@ st.markdown(
         color: #FFFFFF !important;
     }
     
-    .stButton button { 
+    /* BOTONES CON FONDO TURQUESA Y TEXTO NEGRO SÓLIDO */
+    .stButton button, div[data-testid="stFormSubmitButton"] button { 
         background: #00d4ff !important; 
-        color: #050a10 !important; 
+        color: #000000 !important; 
         font-weight: bold !important; 
         width: 100%; 
         height: 42px; 
         border: none !important; 
         border-radius: 4px;
     }
+    
+    .stButton button p, div[data-testid="stFormSubmitButton"] button p {
+        color: #000000 !important;
+        font-weight: bold !important;
+    }
+
     .login-box { 
         background: rgba(0, 212, 255, 0.05); 
         border-left: 4px solid #00d4ff; 
