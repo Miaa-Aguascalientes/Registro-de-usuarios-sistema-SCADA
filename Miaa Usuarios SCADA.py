@@ -117,13 +117,17 @@ def verificar_credenciales(usuario_input, password_input):
         )
         res = cursor.fetchone()
       connection.close()
+      
       if res:
         pwd_real = desencriptar_pwd(res["password"])
+        # Solo permite el acceso si la contraseña coincide Y es Administrador
         if str(password_input) == str(pwd_real):
-          return res["tipo_usuario"]
-    return None
-  except Exception as e:
-    st.error(f"Error al consultar usuario: {e}")
+          if str(res["tipo_usuario"]).strip().lower() == "administrador":
+            return res["tipo_usuario"]
+          else:
+            # Puedes mostrar un mensaje específico si intentan entrar con otro rol
+            st.error("⛔ Acceso denegado: Solo administradores permitidos.")
+            return None
     return None
 
 
