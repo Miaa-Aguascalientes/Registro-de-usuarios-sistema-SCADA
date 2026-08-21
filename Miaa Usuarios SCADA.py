@@ -87,6 +87,7 @@ def get_connection():
         password=password,
         database=database,
         port=3306,
+        connect_timeout=5,
         cursorclass=pymysql.cursors.DictCursor,
     )
   except Exception as e:
@@ -121,7 +122,7 @@ def verificar_credenciales(usuario_input, password_input):
 
 
 # -------------------------------------------------------------------------
-# ESTILO VISUAL GLOBAL (CORREGIDO SIN CONTENEDORES HUÉRFANOS)
+# ESTILO VISUAL GLOBAL (ELIMINACIÓN DE CONTENEDORES VACÍOS)
 # -------------------------------------------------------------------------
 st.markdown(
     """
@@ -147,6 +148,11 @@ st.markdown(
     .stTextInput label, .stSelectbox label {
         color: #FFFFFF !important;
         font-weight: 600 !important;
+    }
+
+    /* OCULTAR CUALQUIER CONTENEDOR VACÍO O HUÉRFANO */
+    div.element-container:empty, div[data-testid="stVerticalBlock"] > div:empty {
+        display: none !important;
     }
 
     /* ESTILO GENERAL PARA BOTONES Y ACCIONES */
