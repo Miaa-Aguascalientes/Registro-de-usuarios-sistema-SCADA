@@ -133,7 +133,7 @@ def verificar_credenciales(usuario_input, password_input):
 
 
 # -------------------------------------------------------------------------
-# ESTILO VISUAL HUD ADAPTADO PARA MÓVIL (BOTONES ESTILIZADOS Y MODERNOS)
+# ESTILO VISUAL HUD ADAPTADO PARA MÓVIL (BOTONES CENTRADOS POR CSS)
 # -------------------------------------------------------------------------
 st.markdown(
     """
@@ -169,24 +169,33 @@ st.markdown(
         font-weight: bold !important;
     }
 
-    /* FORZAR COLOR BLANCO BRILLANTE EN CONTENEDORES DE LISTAS (USUARIOS Y DEPTO) */
+    /* FORZAR COLOR BLANCO BRILLANTE EN CONTENEDORES DE LISTAS */
     div[data-testid="stVerticalBlock"] p, 
     div[data-testid="stVerticalBlock"] span {
         color: #FFFFFF !important;
     }
     
-    /* DISEÑO DE BOTONES PRINCIPALES (MODERNOS, REDONDEADOS Y UNA SOLA LÍNEA) */
+    /* CENTRADO ABSOLUTO Y DISEÑO DE BOTONES DE FORMULARIO */
+    div[data-testid="stFormSubmitButton"] {
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
+    }
+
     div[data-testid="stFormSubmitButton"] button { 
         background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%) !important; 
         color: #000000 !important; 
         font-weight: 800 !important; 
         font-size: 14px !important;
         letter-spacing: 0.5px;
-        width: 100% !important; 
+        width: 60% !important; 
+        max-width: 250px !important;
         height: 45px; 
         border: none !important; 
         border-radius: 25px !important;
         box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+        margin: 0 auto !important;
+        display: block !important;
         transition: all 0.3s ease;
     }
     
@@ -239,9 +248,7 @@ if not st.session_state.autenticado:
     with st.form("login_form"):
       u = st.text_input("USUARIO")
       p = st.text_input("PASSWORD", type="password")
-      col_v1, col_v2, col_v3 = st.columns([1, 2, 1])
-      with col_v2:
-        submitted_login = st.form_submit_button("ACCEDER")
+      submitted_login = st.form_submit_button("ACCEDER")
       if submitted_login:
         rol = verificar_credenciales(u, p)
         if rol:
@@ -375,9 +382,7 @@ with tab_crear:
           key="create_user_dept",
       )
 
-      col_c1, col_c2, col_c3 = st.columns([1, 2, 1])
-      with col_c2:
-        submitted = st.form_submit_button("Guardar Usuario")
+      submitted = st.form_submit_button("Guardar Usuario")
 
       if submitted:
         if not nuevo_usuario or not nuevo_password:
@@ -474,9 +479,7 @@ with tab_editar:
             "Departamento", value=str(user_data["departamento"] or "")
         )
 
-        col_e1, col_e2, col_e3 = st.columns([1, 2, 1])
-        with col_e2:
-          actualizar_btn = st.form_submit_button("Guardar Cambios")
+        actualizar_btn = st.form_submit_button("Guardar Cambios")
 
         if actualizar_btn:
           try:
