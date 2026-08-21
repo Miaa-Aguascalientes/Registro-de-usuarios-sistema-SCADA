@@ -44,11 +44,15 @@ def desencriptar_pwd(password_cifrada):
     return password_cifrada
 
 
-# --- HEADER VISUAL ESTILO TÉCNICO MIAA (SIN TEXTO DUPLICADO) ---
+# --- HEADER VISUAL ESTILO TÉCNICO MIAA CON PULSO ANIMADO ---
 st.markdown(
     """
     <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
-        <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" style="width: 130px; filter: drop-shadow(0 0 10px rgba(0,212,255,0.4));">
+        <img src="https://raw.githubusercontent.com/Miaa-Aguascalientes/Logos/38504978c8f77a4dac38ad476f74dbdee6af2cad/LogoMIAA.svg" style="width: 130px; filter: drop-shadow(0 0 10px rgba(0,212,255,0.4)); animation: floatLogo 4s ease-in-out infinite;">
+    </div>
+    <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 20px;">
+        <span class="pulse-dot"></span>
+        <span style="font-size: 11px; color: #00d4ff; letter-spacing: 1.5px; font-weight: bold;">SISTEMA EN LÍNEA</span>
     </div>
     <hr style="border: none; height: 2px; background: linear-gradient(90deg, transparent, #00d4ff, transparent); margin-bottom: 25px;">
 """,
@@ -119,15 +123,42 @@ def verificar_credenciales(usuario_input, password_input):
 
 
 # -------------------------------------------------------------------------
-# ESTILO VISUAL GLOBAL
+# ESTILO VISUAL GLOBAL CON ANIMACIONES Y MOVIMIENTO
 # -------------------------------------------------------------------------
 st.markdown(
     """
 <style>
     .stApp { background-color: #050a10 !important; }
-    .block-container { padding: 12px !important; max-width: 600px !important; }
+    .block-container { padding: 12px !important; max-width: 600px !important; animation: fadeIn 0.6s ease-out; }
     header, footer { visibility: hidden !important; }
     
+    /* ANIMACIONES */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes floatLogo {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-4px); }
+        100% { transform: translateY(0px); }
+    }
+
+    @keyframes pulseGlow {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(0, 212, 255, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 212, 255, 0); }
+    }
+
+    .pulse-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background-color: #00d4ff;
+        border-radius: 50%;
+        animation: pulseGlow 2s infinite;
+    }
+
     /* TÍTULOS Y TEXTOS */
     h1, h2, h3 { color: #FFFFFF !important; font-family: sans-serif; }
     p, span, label { color: #c0cbd8 !important; }
@@ -137,7 +168,14 @@ st.markdown(
         background-color: #0b1624 !important;
         border: 1px solid #19324c !important;
         border-radius: 8px !important;
+        transition: all 0.3s ease;
     }
+    
+    div[data-testid="stTextInputRootElement"]:hover, div[data-testid="stSelectbox"]:hover {
+        border-color: #00d4ff !important;
+        box-shadow: 0 0 10px rgba(0, 212, 255, 0.15);
+    }
+
     .stTextInput input {
         color: #00d4ff !important;
         font-size: 14px !important;
@@ -165,7 +203,7 @@ st.markdown(
         border: none !important; 
         border-radius: 8px !important;
         box-shadow: 0 4px 15px rgba(0, 212, 255, 0.25);
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     div[data-testid="stFormSubmitButton"] button *, 
@@ -176,11 +214,12 @@ st.markdown(
 
     div[data-testid="stFormSubmitButton"] button:hover, 
     .stButton button:hover {
-        opacity: 0.92;
+        transform: translateY(-2px);
+        opacity: 0.95;
         box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
     }
 
-    /* CAJA DE TARJETA HUD LIMPIA */
+    /* CAJA DE TARJETA HUD CON EFECTO HOVER VIVO */
     .hud-card { 
         background: rgba(11, 22, 36, 0.7); 
         border: 1px solid #19324c;
@@ -189,6 +228,14 @@ st.markdown(
         border-radius: 10px;
         margin-bottom: 15px; 
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        transition: all 0.3s ease;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    .hud-card:hover {
+        border-color: #00d4ff;
+        transform: translateX(4px);
+        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.15);
     }
 </style>
 """,
