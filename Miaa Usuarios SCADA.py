@@ -228,7 +228,10 @@ if not st.session_state.autenticado:
     with st.form("login_form"):
       u = st.text_input("USUARIO")
       p = st.text_input("PASSWORD", type="password")
-      if st.form_submit_button("ACCEDER"):
+      col_v1, col_v2, col_v3 = st.columns([1, 2, 1])
+      with col_v2:
+        submitted_login = st.form_submit_button("ACCEDER")
+      if submitted_login:
         rol = verificar_credenciales(u, p)
         if rol:
           st.session_state.temp_rol = rol
@@ -310,19 +313,21 @@ with tab_lista:
               st.markdown(f"🏢 Depto: {row['departamento']}")
 
               if es_admin:
-                if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
-                  try:
-                    connection = get_connection()
-                    with connection.cursor() as cursor:
-                      cursor.execute(
-                          "DELETE FROM usuarios WHERE id = %s", (row["id"],)
-                      )
-                      connection.commit()
-                    connection.close()
-                    st.success(f"Usuario eliminado.")
-                    st.rerun()
-                  except Exception as err:
-                    st.error(f"Error: {err}")
+                col_del1, col_del2, col_del3 = st.columns([1, 2, 1])
+                with col_del2:
+                  if st.button("🗑️ Eliminar", key=f"del_{row['id']}"):
+                    try:
+                      connection = get_connection()
+                      with connection.cursor() as cursor:
+                        cursor.execute(
+                            "DELETE FROM usuarios WHERE id = %s", (row["id"],)
+                        )
+                        connection.commit()
+                      connection.close()
+                      st.success(f"Usuario eliminado.")
+                      st.rerun()
+                    except Exception as err:
+                      st.error(f"Error: {err}")
 
               st.markdown("---")
         else:
@@ -359,7 +364,9 @@ with tab_crear:
           key="create_user_dept",
       )
 
-      submitted = st.form_submit_button("Guardar Usuario")
+      col_c1, col_c2, col_c3 = st.columns([1, 2, 1])
+      with col_c2:
+        submitted = st.form_submit_button("Guardar Usuario")
 
       if submitted:
         if not nuevo_usuario or not nuevo_password:
@@ -456,7 +463,9 @@ with tab_editar:
             "Departamento", value=str(user_data["departamento"] or "")
         )
 
-        actualizar_btn = st.form_submit_button("Guardar Cambios")
+        col_e1, col_e2, col_e3 = st.columns([1, 2, 1])
+        with col_e2:
+          actualizar_btn = st.form_submit_button("Guardar Cambios")
 
         if actualizar_btn:
           try:
